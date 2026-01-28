@@ -1,7 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Externalize Remotion packages for server-side rendering
+  serverExternalPackages: [
+    '@remotion/bundler',
+    '@remotion/renderer',
+    '@remotion/cli',
+    'esbuild',
+  ],
 };
 
 export default nextConfig;

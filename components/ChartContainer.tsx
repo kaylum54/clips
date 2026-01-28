@@ -1,0 +1,526 @@
+'use client'
+
+import { useCallback, useMemo, useEffect, useRef, useState } from 'react'
+import type { Candle, Timeframe, DateRange, DisplayMode, PendingTrade } from '@/types'
+import Chart from './Chart'
+import StatsOverlay from './StatsOverlay'
+import TradeStats from './TradeStats'
+import MarkerControls from './MarkerControls'
+import PlaybackControls from './PlaybackControls'
+import SpeedSelector from './SpeedSelector'
+import Timeline from './Timeline'
+import TimeframeSelector from './TimeframeSelector'
+import DateRangeSelector from './DateRangeSelector'
+import DisplayModeSelector from './DisplayModeSelector'
+import FullscreenButton from './FullscreenButton'
+import LoadingSpinner from './LoadingSpinner'
+import { RenderProgressModal } from './RenderProgressModal'
+import { usePlayback } from '@/hooks/usePlayback'
+import { useMarkers } from '@/hooks/useMarkers'
+import { useKeyboardControls } from '@/hooks/useKeyboardControls'
+import { useFullscreen } from '@/hooks/useFullscreen'
+import { useRenderJob } from '@/hooks/useRenderJob'
+
+interface ChartContainerProps {
+  candles: Candle[]
+  isLoading: boolean
+  error: string | null
+  timeframe: Timeframe
+  dateRange: DateRange
+  displayMode: DisplayMode
+  supplyAvailable?: boolean
+  onTimeframeChange: (tf: Timeframe) => void
+  onDateRangeChange: (range: DateRange) => void
+  onDisplayModeChange: (mode: DisplayMode) => void
+  pendingTrade?: PendingTrade | null
+  onTradeProcessed?: (entryPrice?: number, exitPrice?: number) => void
+  tokenSymbol?: string
+}
+
+export default function ChartContainer({
+  candles,
+  isLoading,
+  error,
+  timeframe,
+  dateRange,
+  displayMode,
+  supplyAvailable = true,
+  onTimeframeChange,
+  onDateRangeChange,
+  onDisplayModeChange,
+  pendingTrade,
+  onTradeProcessed,
+  tokenSymbol,
+}: ChartContainerProps) {
+  const processedTradeRef = useRef<string | null>(null)
+  const hasPlayedRef = useRef(false)
+  const [isPnlMinimized, setIsPnlMinimized] = useState(false)
+  const [isRenderModalOpen, setIsRenderModalOpen] = useState(false)
+
+  // Async render job hook
+  const renderJob = useRenderJob()
+
+  // Hooks
+  const {
+    visibleCandles,
+    playheadIndex,
+    totalCandles,
+    isPlaying,
+    speed,
+    progress,
+    play,
+    pause,
+    toggle,
+    seekToProgress,
+    stepForward,
+    stepBackward,
+    jumpToStart,
+    jumpToEnd,
+    setSpeed,
+  } = usePlayback({ candles })
+
+  const {
+    entry,
+    exit,
+    isPlacingEntry,
+    isPlacingExit,
+    tradeStats,
+    startPlacingEntry,
+    startPlacingExit,
+    cancelPlacing,
+    placeMarker,
+    setEntryMarker,
+    setExitMarker,
+    clearAll,
+  } = useMarkers()
+
+  // Helper to find closest candle index to a timestamp
+  const findClosestCandleIndex = useCallback((timestamp: number) => {
+    if (candles.length === 0) return 0
+
+    let closestIndex = 0
+    let closestDiff = Math.abs(candles[0].time - timestamp)
+
+    for (let i = 1; i < candles.length; i++) {
+      const diff = Math.abs(candles[i].time - timestamp)
+      if (diff < closestDiff) {
+        closestDiff = diff
+        closestIndex = i
+      }
+    }
+    return closestIndex
+  }, [candles])
+
+  // Process pending trade from transaction import (entry + exit)
+  useEffect(() => {
+    if (!pendingTrade || candles.length === 0 || isLoading) return
+
+    // Create a unique ID for this trade including candle data fingerprint
+    // This ensures we re-process when candles change (e.g., after fetch completes)
+    const candleFingerprint = `${candles.length}-${candles[0]?.time}-${candles[candles.length - 1]?.time}`
+    const tradeId = `${pendingTrade.entry.signature}-${pendingTrade.exit.signature}-${candleFingerprint}`
+    if (processedTradeRef.current === tradeId) return
+
+    // Normalize timestamps - Helius may return seconds or milliseconds
+    // If timestamp is > 10 billion, it's likely milliseconds
+    let entryTimestamp = pendingTrade.entry.timestamp
+    let exitTimestamp = pendingTrade.exit.timestamp
+
+    if (entryTimestamp > 10000000000) {
+      entryTimestamp = Math.floor(entryTimestamp / 1000)
+    }
+    if (exitTimestamp > 10000000000) {
+      exitTimestamp = Math.floor(exitTimestamp / 1000)
+    }
+
+    // Debug: Log timestamps and candle times
+    console.log('=== Marker Placement Debug ===')
+    console.log('Entry timestamp (raw):', pendingTrade.entry.timestamp, '(normalized):', entryTimestamp, new Date(entryTimestamp * 1000).toLocaleTimeString())
+    console.log('Exit timestamp (raw):', pendingTrade.exit.timestamp, '(normalized):', exitTimestamp, new Date(exitTimestamp * 1000).toLocaleTimeString())
+    console.log('Candles count:', candles.length)
+    console.log('Candles range:', new Date(candles[0]?.time * 1000).toLocaleTimeString(), '-', new Date(candles[candles.length - 1]?.time * 1000).toLocaleTimeString())
+
+    // Find candle indices for entry and exit
+    const entryIndex = findClosestCandleIndex(entryTimestamp)
+    const exitIndex = findClosestCandleIndex(exitTimestamp)
+
+    console.log('Entry index:', entryIndex, 'Candle time:', new Date(candles[entryIndex]?.time * 1000).toLocaleTimeString())
+    console.log('Exit index:', exitIndex, 'Candle time:', new Date(candles[exitIndex]?.time * 1000).toLocaleTimeString())
+
+    const entryCandle = candles[entryIndex]
+    const exitCandle = candles[exitIndex]
+
+    // Place entry marker - always use candle close price (USD) since transaction price is in SOL
+    setEntryMarker({
+      type: 'entry',
+      price: entryCandle.close,
+      time: entryCandle.time,
+      candleIndex: entryIndex,
+    })
+
+    // Place exit marker - always use candle close price (USD)
+    setExitMarker({
+      type: 'exit',
+      price: exitCandle.close,
+      time: exitCandle.time,
+      candleIndex: exitIndex,
+    })
+
+    // Seek playhead to entry position (start of the trade)
+    seekToProgress((entryIndex / (candles.length - 1)) * 100)
+
+    // Mark as processed
+    processedTradeRef.current = tradeId
+    onTradeProcessed?.(entryCandle.close, exitCandle.close)
+  }, [pendingTrade, candles, isLoading, findClosestCandleIndex, setEntryMarker, setExitMarker, seekToProgress, onTradeProcessed])
+
+  const {
+    isFullscreen,
+    showControls,
+    containerRef,
+    toggleFullscreen,
+  } = useFullscreen()
+
+  // Calculate marker visibility based on playhead position
+  const showEntryMarker = useMemo(() => {
+    if (!entry) return false
+    return playheadIndex >= entry.candleIndex
+  }, [entry, playheadIndex])
+
+  const showExitMarker = useMemo(() => {
+    if (!exit) return false
+    return playheadIndex >= exit.candleIndex
+  }, [exit, playheadIndex])
+
+  // Track if playback has ever been started
+  if (isPlaying) {
+    hasPlayedRef.current = true
+  }
+
+  // Check if trade is complete (exit marker reached and has played)
+  const isTradeComplete = showExitMarker && !!tradeStats && hasPlayedRef.current
+
+  // Auto-show PnL card when trade completes
+  useEffect(() => {
+    if (isTradeComplete) {
+      setIsPnlMinimized(false)
+    }
+  }, [isTradeComplete])
+
+  // Show trade stats only if trade complete AND not minimized
+  const showTradeStats = isTradeComplete && !isPnlMinimized
+
+  // Current and first candle for stats overlay
+  const currentCandle = visibleCandles[visibleCandles.length - 1] || null
+  const firstCandle = candles[0] || null
+
+  // Handle chart click for marker placement
+  const handleChartClick = useCallback((price: number, time: number, candleIndex: number) => {
+    placeMarker(price, time, candleIndex)
+  }, [placeMarker])
+
+  // Handle generate video (async queue-based)
+  const handleGenerateVideo = useCallback(async () => {
+    if (!entry || !exit || candles.length === 0) return
+
+    // Open modal immediately
+    setIsRenderModalOpen(true)
+
+    // Calculate end index with buffer for P&L card display
+    const fps = 30
+    const BASE_INTERVAL_MS = 200
+    const msPerCandle = BASE_INTERVAL_MS / speed
+    const framesPerCandle = Math.max(1, Math.round(msPerCandle / (1000 / fps)))
+    const targetBufferSeconds = 3
+    const targetBufferFrames = targetBufferSeconds * fps
+    const bufferCandles = Math.ceil(targetBufferFrames / framesPerCandle)
+    const endIndex = Math.min(exit.candleIndex + bufferCandles, candles.length - 1)
+
+    // Start async render job
+    await renderJob.startRender({
+      candles,
+      entryMarker: {
+        candleIndex: entry.candleIndex,
+        price: entry.price,
+        time: entry.time,
+      },
+      exitMarker: {
+        candleIndex: exit.candleIndex,
+        price: exit.price,
+        time: exit.time,
+      },
+      speed,
+      tokenSymbol: tokenSymbol || 'chart',
+      startIndex: entry.candleIndex,
+      endIndex,
+    })
+  }, [entry, exit, candles, speed, tokenSymbol, renderJob])
+
+  // Handle modal close
+  const handleRenderModalClose = useCallback(() => {
+    setIsRenderModalOpen(false)
+    // Reset render job state if completed or failed
+    if (renderJob.status === 'completed' || renderJob.status === 'failed') {
+      renderJob.reset()
+    }
+  }, [renderJob])
+
+  // Handle retry
+  const handleRenderRetry = useCallback(async () => {
+    if (!entry || !exit || candles.length === 0) return
+
+    // Recalculate end index
+    const fps = 30
+    const BASE_INTERVAL_MS = 200
+    const msPerCandle = BASE_INTERVAL_MS / speed
+    const framesPerCandle = Math.max(1, Math.round(msPerCandle / (1000 / fps)))
+    const targetBufferSeconds = 3
+    const targetBufferFrames = targetBufferSeconds * fps
+    const bufferCandles = Math.ceil(targetBufferFrames / framesPerCandle)
+    const endIndex = Math.min(exit.candleIndex + bufferCandles, candles.length - 1)
+
+    await renderJob.startRender({
+      candles,
+      entryMarker: {
+        candleIndex: entry.candleIndex,
+        price: entry.price,
+        time: entry.time,
+      },
+      exitMarker: {
+        candleIndex: exit.candleIndex,
+        price: exit.price,
+        time: exit.time,
+      },
+      speed,
+      tokenSymbol: tokenSymbol || 'chart',
+      startIndex: entry.candleIndex,
+      endIndex,
+    })
+  }, [entry, exit, candles, speed, tokenSymbol, renderJob])
+
+  // Keyboard controls
+  useKeyboardControls({
+    onTogglePlayback: toggle,
+    onStepForward: stepForward,
+    onStepBackward: stepBackward,
+    onJumpToStart: jumpToStart,
+    onJumpToEnd: jumpToEnd,
+    onSetSpeed: setSpeed,
+    onToggleFullscreen: toggleFullscreen,
+    disabled: isLoading || candles.length === 0,
+  })
+
+  const isPlacingMarker = isPlacingEntry || isPlacingExit
+
+  // Show rate limit warning when there's an error but we still have data
+  const showRateLimitWarning = error && candles.length > 0 && error.toLowerCase().includes('rate')
+
+  return (
+    <div
+      ref={containerRef}
+      className={`
+        relative w-full
+        ${isFullscreen ? 'bg-black h-screen flex flex-col' : ''}
+      `}
+    >
+      {/* Rate Limit Warning Banner */}
+      {showRateLimitWarning && (
+        <div className="bg-yellow-900/50 border border-yellow-700 text-yellow-200 px-4 py-2 rounded-lg mb-2 text-sm">
+          Rate limited - showing cached data. Try again in a few seconds.
+        </div>
+      )}
+
+
+      {/* Chart Area */}
+      <div className={`relative ${isFullscreen ? 'flex-1' : ''}`}>
+        {/* PnL Toggle Button - shows when trade is complete */}
+        {isTradeComplete && (
+          <button
+            onClick={() => setIsPnlMinimized(!isPnlMinimized)}
+            className={`
+              absolute top-3 right-3 z-20 px-3 py-1.5 rounded-lg
+              flex items-center gap-2 text-sm font-medium
+              transition-all duration-200
+              ${isPnlMinimized
+                ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
+                : 'bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-400'
+              }
+            `}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+              <path fillRule="evenodd" d="M4.5 2A1.5 1.5 0 003 3.5v13A1.5 1.5 0 004.5 18h11a1.5 1.5 0 001.5-1.5V7.621a1.5 1.5 0 00-.44-1.06l-4.12-4.122A1.5 1.5 0 0011.378 2H4.5zm4.75 6.75a.75.75 0 011.5 0v2.546l.943-1.048a.75.75 0 011.114 1.004l-2.25 2.5a.75.75 0 01-1.114 0l-2.25-2.5a.75.75 0 111.114-1.004l.943 1.048V8.75z" clipRule="evenodd" />
+            </svg>
+            {isPnlMinimized ? 'Show P&L' : 'Hide P&L'}
+          </button>
+        )}
+
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-zinc-900/80 z-20">
+            <LoadingSpinner size="lg" />
+          </div>
+        )}
+
+        {candles.length === 0 && !isLoading ? (
+          <div className="h-[500px] flex items-center justify-center bg-zinc-900 rounded-lg border border-zinc-800">
+            <p className="text-zinc-500">Enter a token address to load chart data</p>
+          </div>
+        ) : (
+          <>
+            <StatsOverlay
+              currentCandle={currentCandle}
+              firstCandle={firstCandle}
+            />
+            <TradeStats
+              stats={tradeStats}
+              isVisible={showTradeStats}
+              onClose={() => setIsPnlMinimized(true)}
+            />
+            <Chart
+              candles={candles}
+              visibleCandles={visibleCandles}
+              entryMarker={entry}
+              exitMarker={exit}
+              showEntryMarker={showEntryMarker}
+              showExitMarker={showExitMarker}
+              height={isFullscreen ? window.innerHeight - 120 : 500}
+              onChartClick={handleChartClick}
+              isPlacingMarker={isPlacingMarker}
+            />
+          </>
+        )}
+      </div>
+
+      {/* Controls */}
+      <div
+        className={`
+          ${isFullscreen
+            ? `absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 to-transparent fullscreen-controls ${showControls ? '' : 'hidden'}`
+            : 'mt-4 space-y-4'
+          }
+        `}
+      >
+        {/* Marker Controls Row */}
+        <div className={`flex items-center justify-between ${isFullscreen ? 'mb-3' : ''}`}>
+          <MarkerControls
+            hasEntry={!!entry}
+            hasExit={!!exit}
+            isPlacingEntry={isPlacingEntry}
+            isPlacingExit={isPlacingExit}
+            onStartPlacingEntry={startPlacingEntry}
+            onStartPlacingExit={startPlacingExit}
+            onCancelPlacing={cancelPlacing}
+            onClearAll={clearAll}
+            disabled={candles.length === 0 || isLoading}
+          />
+          {!isFullscreen && (
+            <FullscreenButton
+              isFullscreen={isFullscreen}
+              onClick={toggleFullscreen}
+            />
+          )}
+        </div>
+
+        {/* Playback Controls Row */}
+        <div className={`flex items-center gap-4 flex-wrap ${isFullscreen ? 'justify-center' : ''}`}>
+          <PlaybackControls
+            isPlaying={isPlaying}
+            onPlay={play}
+            onPause={pause}
+            onStepForward={stepForward}
+            onStepBackward={stepBackward}
+            onJumpToStart={jumpToStart}
+            onJumpToEnd={jumpToEnd}
+            disabled={candles.length === 0 || isLoading}
+            atStart={playheadIndex === 0}
+            atEnd={playheadIndex >= totalCandles - 1}
+          />
+          <SpeedSelector
+            currentSpeed={speed}
+            onSpeedChange={setSpeed}
+            disabled={candles.length === 0 || isLoading}
+          />
+          {/* Generate Video Button */}
+          <button
+            onClick={handleGenerateVideo}
+            disabled={renderJob.isRendering || !entry || !exit || candles.length === 0}
+            className={`
+              flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+              transition-all duration-200
+              ${renderJob.isRendering || !entry || !exit || candles.length === 0
+                ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                : 'bg-green-600 hover:bg-green-500 text-white'
+              }
+            `}
+            title={!entry || !exit ? 'Place entry and exit markers first' : 'Generate replay video'}
+          >
+            {renderJob.isRendering ? (
+              <>
+                <LoadingSpinner size="sm" />
+                Rendering...
+              </>
+            ) : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                  <path d="M3.25 4A2.25 2.25 0 001 6.25v7.5A2.25 2.25 0 003.25 16h7.5A2.25 2.25 0 0013 13.75v-7.5A2.25 2.25 0 0010.75 4h-7.5zM19 4.75a.75.75 0 00-1.28-.53l-3 3a.75.75 0 00-.22.53v4.5c0 .199.079.39.22.53l3 3a.75.75 0 001.28-.53V4.75z" />
+                </svg>
+                Generate Video
+              </>
+            )}
+          </button>
+          {isFullscreen && (
+            <FullscreenButton
+              isFullscreen={isFullscreen}
+              onClick={toggleFullscreen}
+            />
+          )}
+        </div>
+
+        {/* Timeline */}
+        <Timeline
+          progress={progress}
+          currentIndex={playheadIndex}
+          totalCandles={totalCandles}
+          onSeek={seekToProgress}
+          disabled={candles.length === 0 || isLoading}
+        />
+
+        {/* Timeframe, Date Range, and Display Mode (only in normal mode) */}
+        {!isFullscreen && (
+          <div className="flex items-center gap-6 flex-wrap">
+            <TimeframeSelector
+              currentTimeframe={timeframe}
+              onTimeframeChange={onTimeframeChange}
+              disabled={isLoading}
+            />
+            <DateRangeSelector
+              currentRange={dateRange}
+              onRangeChange={onDateRangeChange}
+              disabled={isLoading}
+            />
+            <DisplayModeSelector
+              currentMode={displayMode}
+              onModeChange={onDisplayModeChange}
+              disabled={isLoading}
+              supplyAvailable={supplyAvailable}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Render Progress Modal */}
+      <RenderProgressModal
+        isOpen={isRenderModalOpen}
+        status={renderJob.status}
+        progress={renderJob.progress}
+        position={renderJob.position}
+        estimatedWaitSeconds={renderJob.estimatedWaitSeconds}
+        downloadReady={renderJob.downloadReady}
+        error={renderJob.error}
+        canRetry={renderJob.canRetry}
+        onClose={handleRenderModalClose}
+        onDownload={renderJob.downloadVideo}
+        onRetry={handleRenderRetry}
+      />
+    </div>
+  )
+}
