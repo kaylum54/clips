@@ -28,6 +28,24 @@ if (!redisUrl) {
 const connection = new IORedis(redisUrl, {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
+  // Upstash requires TLS
+  tls: {
+    rejectUnauthorized: false,
+  },
+  // Keep connection alive
+  keepAlive: 30000, // 30 seconds
+  // Reconnection settings
+  retryStrategy: (times) => {
+    if (times > 10) {
+      console.error('[Worker] Redis: Max reconnection attempts reached')
+      return null
+    }
+    const delay = Math.min(times * 200, 5000)
+    console.log(`[Worker] Redis: Reconnecting in ${delay}ms (attempt ${times})`)
+    return delay
+  },
+  // Connection timeout
+  connectTimeout: 10000,
 })
 
 console.log('[Worker] Starting video render worker...')
