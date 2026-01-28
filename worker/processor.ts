@@ -73,8 +73,9 @@ async function updateJobStatus(
   status: string,
   updates: Record<string, unknown> = {}
 ) {
-  const { error } = await getSupabase()
-    .from('render_jobs')
+  // Type assertion needed - render_jobs table not in generated types
+  const { error } = await (getSupabase()
+    .from('render_jobs') as any)
     .update({
       status,
       ...updates,
@@ -89,8 +90,8 @@ async function updateJobStatus(
 }
 
 async function updateJobProgress(jobId: string, progress: number) {
-  const { error } = await getSupabase()
-    .from('render_jobs')
+  const { error } = await (getSupabase()
+    .from('render_jobs') as any)
     .update({ progress })
     .eq('id', jobId)
 
