@@ -158,6 +158,7 @@ export async function POST(request: NextRequest) {
       tokenSymbol,
       startIndex,
       endIndex,
+      isPro,
     }
 
     // Insert job into database using admin client

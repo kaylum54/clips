@@ -14,6 +14,7 @@ export interface RenderJobInput {
   tokenSymbol?: string
   startIndex: number
   endIndex: number
+  isPro: boolean
 }
 
 export interface RenderJobData {

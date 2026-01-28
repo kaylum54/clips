@@ -121,7 +121,7 @@ async function incrementRenderCount(userId: string, tokenSymbol?: string, pnlPer
 
 export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJobResult> {
   const { jobId, userId, inputData } = job.data
-  const { candles, entryMarker, exitMarker, speed, tokenSymbol, startIndex, endIndex } = inputData
+  const { candles, entryMarker, exitMarker, speed, tokenSymbol, startIndex, endIndex, isPro } = inputData
 
   const startTime = Date.now()
 
@@ -156,6 +156,7 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
         speed,
         startIndex,
         tokenSymbol: tokenSymbol || '',
+        isPro,
       },
     })
 
@@ -184,6 +185,7 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
         speed,
         startIndex,
         tokenSymbol: tokenSymbol || '',
+        isPro,
       },
       onProgress: async ({ progress }) => {
         const progressPercent = Math.round(progress * 100)

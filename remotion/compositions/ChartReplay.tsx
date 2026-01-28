@@ -10,6 +10,7 @@ export interface ChartReplayProps {
   speed: number
   startIndex: number // Entry candle index - video starts with candles up to here visible
   tokenSymbol?: string
+  isPro?: boolean
 }
 
 interface TradeStats {
@@ -30,6 +31,7 @@ export const ChartReplay: React.FC<ChartReplayProps> = ({
   speed,
   startIndex,
   tokenSymbol,
+  isPro,
 }) => {
   const frame = useCurrentFrame()
   const { fps, width, height } = useVideoConfig()
@@ -98,22 +100,25 @@ export const ChartReplay: React.FC<ChartReplayProps> = ({
         visibleCandleCount={visibleCandleCount}
       />
 
-      {/* Logo overlay */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 30,
-          left: 30,
-        }}
-      >
-        <Img
-          src={staticFile('clips-logo-v2.png')}
+      {/* Watermark for free users */}
+      {!isPro && (
+        <div
           style={{
-            height: 120,
-            width: 'auto',
+            position: 'absolute',
+            bottom: 30,
+            right: 30,
+            opacity: 0.7,
           }}
-        />
-      </div>
+        >
+          <Img
+            src={staticFile('motionclipswatermark.jpeg')}
+            style={{
+              height: 60,
+              width: 'auto',
+            }}
+          />
+        </div>
+      )}
 
       {/* P&L Card - appears after exit with slide-in animation */}
       {showPnlCard && tradeStats && (
