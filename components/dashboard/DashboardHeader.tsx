@@ -1,16 +1,23 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/components/AuthProvider'
 import { useUser } from '@/hooks/useUser'
 
 export function DashboardHeader() {
+  const router = useRouter()
   const { user, signOut } = useAuth()
   const { rendersThisMonth, renderLimit, isPro, isLoading } = useUser()
   const [showMenu, setShowMenu] = useState(false)
   const [upgradeLoading, setUpgradeLoading] = useState(false)
+
+  const handleSignOut = async () => {
+    await signOut()
+    router.push('/')
+  }
 
   const handleUpgrade = async () => {
     setUpgradeLoading(true)
@@ -160,8 +167,8 @@ export function DashboardHeader() {
                 <div className="border-t border-[#1f1f1f] py-1">
                   <button
                     onClick={() => {
-                      signOut()
                       setShowMenu(false)
+                      handleSignOut()
                     }}
                     className="flex items-center gap-3 px-4 py-2.5 text-red-400 hover:text-red-300 hover:bg-red-500/5 transition-all duration-150 w-full text-left"
                   >

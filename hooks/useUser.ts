@@ -14,8 +14,8 @@ const FREE_RENDER_LIMIT = 5
 export function useUser() {
   const { user, profile, loading, signOut, refreshProfile } = useAuth()
 
-  // Check if user has pro subscription
-  const isPro = profile?.subscription_status === 'active'
+  // Check if user has pro subscription (admins are also treated as pro)
+  const isPro = profile?.subscription_status === 'active' || profile?.is_admin === true
 
   // Check if user can render (hasn't hit limit or is pro)
   const rendersRemaining = isPro
