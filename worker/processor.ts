@@ -14,10 +14,22 @@ import os from 'os'
 import { createClient } from '@supabase/supabase-js'
 import type { RenderJobData, RenderJobResult } from '@/lib/queue/types'
 
-// Supabase admin client for the worker
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
+// Supabase admin client for the worker (lazy-loaded to ensure env vars are available)
+let supabaseClient: ReturnType<typeof createClient> | null = null
+
+function getSupabase() {
+  if (!supabaseClient) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error('NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required')
+    }
+
+    supabaseClient = createClient(supabaseUrl, supabaseServiceKey)
+  }
+  return supabaseClient
+}
 
 // Bundle caching
 let cachedBundlePath: string | null = null
@@ -61,7 +73,7 @@ async function updateJobStatus(
   status: string,
   updates: Record<string, unknown> = {}
 ) {
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('render_jobs')
     .update({
       status,
@@ -77,7 +89,7 @@ async function updateJobStatus(
 }
 
 async function updateJobProgress(jobId: string, progress: number) {
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('render_jobs')
     .update({ progress })
     .eq('id', jobId)
@@ -89,14 +101,14 @@ async function updateJobProgress(jobId: string, progress: number) {
 
 async function incrementRenderCount(userId: string, tokenSymbol?: string, pnlPercent?: number) {
   // Increment render count
-  const { error: rpcError } = await supabase.rpc('increment_render_count', { user_uuid: userId })
+  const { error: rpcError } = await getSupabase().rpc('increment_render_count', { user_uuid: userId })
 
   if (rpcError) {
     console.error('[Worker] Failed to increment render count:', rpcError)
   }
 
   // Record render in history
-  const { error: insertError } = await supabase.from('renders').insert({
+  const { error: insertError } = await getSupabase().from('renders').insert({
     user_id: userId,
     token_symbol: tokenSymbol || null,
     pnl_percent: pnlPercent || null,
