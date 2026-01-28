@@ -101,15 +101,16 @@ async function updateJobProgress(jobId: string, progress: number) {
 }
 
 async function incrementRenderCount(userId: string, tokenSymbol?: string, pnlPercent?: number) {
-  // Increment render count
-  const { error: rpcError } = await getSupabase().rpc('increment_render_count', { user_uuid: userId })
+  // Increment render count (type assertion - rpc not in generated types)
+  const { error: rpcError } = await (getSupabase() as any).rpc('increment_render_count', { user_uuid: userId })
 
   if (rpcError) {
     console.error('[Worker] Failed to increment render count:', rpcError)
   }
 
-  // Record render in history
-  const { error: insertError } = await getSupabase().from('renders').insert({
+  // Record render in history (type assertion - renders table not in generated types)
+  const { error: insertError } = await (getSupabase()
+    .from('renders') as any).insert({
     user_id: userId,
     token_symbol: tokenSymbol || null,
     pnl_percent: pnlPercent || null,
