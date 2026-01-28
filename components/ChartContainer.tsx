@@ -15,11 +15,13 @@ import DisplayModeSelector from './DisplayModeSelector'
 import FullscreenButton from './FullscreenButton'
 import LoadingSpinner from './LoadingSpinner'
 import { RenderProgressModal } from './RenderProgressModal'
+import { UpgradeModal } from './UpgradeModal'
 import { usePlayback } from '@/hooks/usePlayback'
 import { useMarkers } from '@/hooks/useMarkers'
 import { useKeyboardControls } from '@/hooks/useKeyboardControls'
 import { useFullscreen } from '@/hooks/useFullscreen'
 import { useRenderJob } from '@/hooks/useRenderJob'
+import { useUser } from '@/hooks/useUser'
 
 interface ChartContainerProps {
   candles: Candle[]
@@ -56,6 +58,10 @@ export default function ChartContainer({
   const hasPlayedRef = useRef(false)
   const [isPnlMinimized, setIsPnlMinimized] = useState(false)
   const [isRenderModalOpen, setIsRenderModalOpen] = useState(false)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+
+  // User subscription and render limits
+  const { canRender, isPro, rendersRemaining, renderLimit, isAuthenticated } = useUser()
 
   // Async render job hook
   const renderJob = useRenderJob()
@@ -223,6 +229,12 @@ export default function ChartContainer({
   const handleGenerateVideo = useCallback(async () => {
     if (!entry || !exit || candles.length === 0) return
 
+    // Check if user can render - show upgrade modal if not
+    if (!canRender) {
+      setShowUpgradeModal(true)
+      return
+    }
+
     // Open modal immediately
     setIsRenderModalOpen(true)
 
@@ -254,7 +266,7 @@ export default function ChartContainer({
       startIndex: entry.candleIndex,
       endIndex,
     })
-  }, [entry, exit, candles, speed, tokenSymbol, renderJob])
+  }, [entry, exit, candles, speed, tokenSymbol, renderJob, canRender])
 
   // Handle modal close
   const handleRenderModalClose = useCallback(() => {
@@ -327,6 +339,35 @@ export default function ChartContainer({
       {showRateLimitWarning && (
         <div className="bg-yellow-900/50 border border-yellow-700 text-yellow-200 px-4 py-2 rounded-lg mb-2 text-sm">
           Rate limited - showing cached data. Try again in a few seconds.
+        </div>
+      )}
+
+      {/* Render Limit Exhausted Banner */}
+      {isAuthenticated && !canRender && !isPro && (
+        <div className="bg-gradient-to-r from-amber-900/40 to-orange-900/40 border border-amber-600/50 rounded-xl p-4 mb-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-amber-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-amber-200 font-medium">
+                  You&apos;ve used all {renderLimit} free renders this month
+                </p>
+                <p className="text-amber-300/70 text-sm">
+                  Upgrade to Pro for unlimited renders and priority queue
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowUpgradeModal(true)}
+              className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-black text-sm font-semibold rounded-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_20px_rgba(34,197,94,0.4)] flex-shrink-0"
+            >
+              Upgrade to Pro
+            </button>
+          </div>
         </div>
       )}
 
@@ -448,15 +489,32 @@ export default function ChartContainer({
               transition-all duration-200
               ${renderJob.isRendering || !entry || !exit || candles.length === 0
                 ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
-                : 'bg-green-600 hover:bg-green-500 text-white'
+                : !canRender
+                  ? 'bg-zinc-700 text-zinc-400 cursor-pointer hover:bg-zinc-600'
+                  : 'bg-green-600 hover:bg-green-500 text-white'
               }
             `}
-            title={!entry || !exit ? 'Place entry and exit markers first' : 'Generate replay video'}
+            title={
+              !entry || !exit
+                ? 'Place entry and exit markers first'
+                : !canRender
+                  ? `No renders remaining (${rendersRemaining}/${renderLimit}) - Upgrade to Pro`
+                  : isPro
+                    ? 'Generate replay video (Pro - Unlimited)'
+                    : `Generate replay video (${rendersRemaining}/${renderLimit} remaining)`
+            }
           >
             {renderJob.isRendering ? (
               <>
                 <LoadingSpinner size="sm" />
                 Rendering...
+              </>
+            ) : !canRender ? (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                </svg>
+                Upgrade to Render
               </>
             ) : (
               <>
@@ -520,6 +578,12 @@ export default function ChartContainer({
         onClose={handleRenderModalClose}
         onDownload={renderJob.downloadVideo}
         onRetry={handleRenderRetry}
+      />
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
       />
     </div>
   )

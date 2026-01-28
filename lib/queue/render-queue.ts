@@ -30,11 +30,28 @@ export function getRenderQueue(): Queue<RenderJobData> {
   return renderQueue
 }
 
-export async function addRenderJob(jobData: RenderJobData): Promise<string> {
+// Priority levels: lower number = higher priority
+export const RENDER_PRIORITY = {
+  PRO: 1,      // Pro users get highest priority
+  FREE: 10,    // Free users get lower priority
+} as const
+
+interface AddRenderJobOptions {
+  isPro?: boolean
+}
+
+export async function addRenderJob(
+  jobData: RenderJobData,
+  options: AddRenderJobOptions = {}
+): Promise<string> {
   const queue = getRenderQueue()
+
+  // Pro users get priority queue (lower number = higher priority)
+  const priority = options.isPro ? RENDER_PRIORITY.PRO : RENDER_PRIORITY.FREE
 
   const job = await queue.add('render', jobData, {
     jobId: jobData.jobId, // Use our database job ID as BullMQ job ID
+    priority,
   })
 
   return job.id || jobData.jobId

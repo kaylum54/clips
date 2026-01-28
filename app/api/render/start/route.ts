@@ -183,13 +183,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Add job to BullMQ queue
+    // Add job to BullMQ queue (Pro users get priority)
     try {
-      await addRenderJob({
-        jobId: job.id,
-        userId: user.id,
-        inputData,
-      })
+      await addRenderJob(
+        {
+          jobId: job.id,
+          userId: user.id,
+          inputData,
+        },
+        { isPro }
+      )
     } catch (queueError) {
       console.error('Failed to add job to queue:', queueError)
 
@@ -218,9 +221,14 @@ export async function POST(request: NextRequest) {
       status: 'pending',
       position,
       estimatedWaitSeconds,
+      isPro,
       message: position > 0
-        ? `Your video is #${position} in the queue. Estimated wait: ${Math.ceil(estimatedWaitSeconds / 60)} minutes.`
-        : 'Your video is being processed now.',
+        ? isPro
+          ? `Your video is #${position} in the priority queue. Estimated wait: ${Math.ceil(estimatedWaitSeconds / 60)} minutes.`
+          : `Your video is #${position} in the queue. Estimated wait: ${Math.ceil(estimatedWaitSeconds / 60)} minutes.`
+        : isPro
+          ? 'Your video is being processed now with priority.'
+          : 'Your video is being processed now.',
     })
 
   } catch (error) {
