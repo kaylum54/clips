@@ -10,6 +10,25 @@ export function DashboardHeader() {
   const { user, signOut } = useAuth()
   const { rendersThisMonth, renderLimit, isPro, isLoading } = useUser()
   const [showMenu, setShowMenu] = useState(false)
+  const [upgradeLoading, setUpgradeLoading] = useState(false)
+
+  const handleUpgrade = async () => {
+    setUpgradeLoading(true)
+    try {
+      const response = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+      const data = await response.json()
+      if (data.url) {
+        window.location.href = data.url
+      }
+    } catch (error) {
+      console.error('Checkout error:', error)
+    } finally {
+      setUpgradeLoading(false)
+    }
+  }
 
   const usagePercent = renderLimit > 0 && renderLimit !== Infinity ? (rendersThisMonth / renderLimit) * 100 : 0
   const isNearLimit = usagePercent >= 80
@@ -66,12 +85,13 @@ export function DashboardHeader() {
 
         {/* Upgrade button (free users only) */}
         {!isPro && !isLoading && (
-          <Link
-            href="/api/stripe/checkout"
-            className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-black text-sm font-semibold rounded-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_20px_rgba(34,197,94,0.4)]"
+          <button
+            onClick={handleUpgrade}
+            disabled={upgradeLoading}
+            className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-black text-sm font-semibold rounded-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_20px_rgba(34,197,94,0.4)] disabled:opacity-50"
           >
-            Upgrade
-          </Link>
+            {upgradeLoading ? 'Loading...' : 'Upgrade'}
+          </button>
         )}
 
         {/* User menu */}
@@ -121,16 +141,19 @@ export function DashboardHeader() {
                     Leaderboard
                   </Link>
                   {!isPro && (
-                    <Link
-                      href="/api/stripe/checkout"
-                      className="flex items-center gap-3 px-4 py-2.5 text-green-400 hover:text-green-300 hover:bg-green-500/5 transition-all duration-150"
-                      onClick={() => setShowMenu(false)}
+                    <button
+                      onClick={() => {
+                        setShowMenu(false)
+                        handleUpgrade()
+                      }}
+                      disabled={upgradeLoading}
+                      className="flex items-center gap-3 px-4 py-2.5 text-green-400 hover:text-green-300 hover:bg-green-500/5 transition-all duration-150 w-full text-left disabled:opacity-50"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                       </svg>
-                      Upgrade to Pro
-                    </Link>
+                      {upgradeLoading ? 'Loading...' : 'Upgrade to Pro'}
+                    </button>
                   )}
                 </div>
 
