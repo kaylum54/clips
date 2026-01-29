@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     // Check user profile and render limits
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('subscription_status, renders_this_month, is_banned')
+      .select('subscription_status, renders_this_month, is_banned, is_admin')
       .eq('id', user.id)
       .single()
 
@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const isPro = profile.subscription_status === 'active'
+    const isPro = profile.subscription_status === 'active' || profile.is_admin === true
     const rendersThisMonth = profile.renders_this_month ?? 0
 
     // Security: Enforce render limits for free users
@@ -209,6 +209,7 @@ export async function POST(request: NextRequest) {
         speed,
         startIndex,
         tokenSymbol: tokenSymbol || '',
+        isPro,
       },
     })
 
@@ -237,6 +238,7 @@ export async function POST(request: NextRequest) {
         speed,
         startIndex,
         tokenSymbol: tokenSymbol || '',
+        isPro,
       },
       onProgress: ({ progress }) => {
         if (progress % 0.1 < 0.01) {

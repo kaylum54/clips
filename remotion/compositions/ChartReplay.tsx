@@ -156,7 +156,7 @@ export const ChartReplay: React.FC<ChartReplayProps> = ({
           style={{
             position: 'absolute',
             left: pnlCardX,
-            top: '35%',
+            top: '50%',
             transform: 'translateY(-50%)',
             opacity: pnlCardOpacity,
           }}
