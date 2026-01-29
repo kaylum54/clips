@@ -60,8 +60,9 @@ export function useCandleData(): UseCandleDataReturn {
     // Check if we already have token info cached for this address
     const hasTokenInfo = tokenCacheRef.current.has(address)
 
-    // Retry logic for rate limits
-    const maxRetries = 3
+    // Retry logic — only retry server errors, not rate limits
+    // (rate limits are handled server-side with built-in throttling)
+    const maxRetries = 2
     let lastError: Error | null = null
 
     for (let attempt = 0; attempt < maxRetries; attempt++) {
@@ -88,12 +89,17 @@ export function useCandleData(): UseCandleDataReturn {
         const data: CandleResponse = await response.json()
 
         if (!data.success) {
-          // Retry on rate limit or server errors with backoff
-          const isRetryable = data.error?.toLowerCase().includes('rate') ||
-            (response.status >= 500 && response.status < 600)
-          if (isRetryable && attempt < maxRetries - 1) {
+          // Only retry on server errors (5xx), NOT on rate limits
+          // Rate limits are throttled server-side — retrying makes it worse
+          const isRateLimit = response.status === 429 || data.error?.toLowerCase().includes('rate')
+          const isServerError = response.status >= 500 && response.status < 600
+
+          if (isRateLimit) {
+            throw new Error(data.error || 'Rate limited. Please wait a moment and try again.')
+          }
+          if (isServerError && attempt < maxRetries - 1) {
             lastError = new Error(data.error || `Server error (${response.status})`)
-            await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000))
+            await new Promise(resolve => setTimeout(resolve, 3000))
             continue
           }
           throw new Error(data.error || 'Failed to fetch candles')
@@ -130,9 +136,9 @@ export function useCandleData(): UseCandleDataReturn {
       } catch (err) {
         lastError = err instanceof Error ? err : new Error('Failed to load chart data')
 
-        // Retry on any error (network failures, rate limits, server errors)
+        // Only retry on network failures / server errors
         if (attempt < maxRetries - 1) {
-          await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000))
+          await new Promise(resolve => setTimeout(resolve, 3000))
           continue
         }
 

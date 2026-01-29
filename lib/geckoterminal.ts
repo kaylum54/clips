@@ -6,6 +6,50 @@ const GECKO_API_BASE = 'https://api.geckoterminal.com/api/v2'
 const poolCache = new Map<string, { pool: string; timestamp: number }>()
 const POOL_CACHE_TTL = 10 * 60 * 1000 // 10 minutes
 
+// Simple rate limiter: GeckoTerminal free tier = 30 req/min
+// We'll allow 25 req/min to have some headroom
+const rateLimiter = {
+  timestamps: [] as number[],
+  maxRequests: 25,
+  windowMs: 60_000,
+
+  async waitForSlot(): Promise<void> {
+    const now = Date.now()
+    // Remove timestamps outside the window
+    this.timestamps = this.timestamps.filter(t => now - t < this.windowMs)
+
+    if (this.timestamps.length >= this.maxRequests) {
+      // Wait until the oldest request falls outside the window
+      const oldestInWindow = this.timestamps[0]
+      const waitMs = oldestInWindow + this.windowMs - now + 100 // +100ms buffer
+      await new Promise(resolve => setTimeout(resolve, waitMs))
+      // Clean up again after waiting
+      const afterWait = Date.now()
+      this.timestamps = this.timestamps.filter(t => afterWait - t < this.windowMs)
+    }
+
+    this.timestamps.push(Date.now())
+  },
+}
+
+/**
+ * Fetch with rate limiting for GeckoTerminal
+ */
+async function rateLimitedFetch(url: string): Promise<Response> {
+  await rateLimiter.waitForSlot()
+
+  const response = await fetch(url)
+
+  // If we still get 429, wait and retry once
+  if (response.status === 429) {
+    await new Promise(resolve => setTimeout(resolve, 5000))
+    await rateLimiter.waitForSlot()
+    return fetch(url)
+  }
+
+  return response
+}
+
 /**
  * Maps app timeframes to GeckoTerminal timeframe + aggregate params
  */
@@ -34,7 +78,7 @@ async function findPoolAddress(tokenAddress: string): Promise<string> {
 
   const url = `${GECKO_API_BASE}/networks/solana/tokens/${tokenAddress}/pools?page=1`
 
-  const response = await fetch(url)
+  const response = await rateLimitedFetch(url)
 
   if (!response.ok) {
     if (response.status === 404) {
@@ -97,7 +141,7 @@ async function fetchOhlcvPage(
 
   const url = `${GECKO_API_BASE}/networks/solana/pools/${poolAddress}/ohlcv/${tf}?${params}`
 
-  const response = await fetch(url)
+  const response = await rateLimitedFetch(url)
 
   if (!response.ok) {
     if (response.status === 429) {
@@ -135,7 +179,9 @@ function getIntervalSeconds(timeframe: Timeframe): number {
 }
 
 const PAGE_LIMIT = 1000
-const MAX_PAGES = 10
+// Cap pagination to avoid burning through the rate limit
+// 1 pool lookup + up to 6 OHLCV pages = 7 requests max per fetch
+const MAX_PAGES = 6
 
 /**
  * Fetches OHLCV candle data from GeckoTerminal with automatic pagination.
@@ -159,11 +205,6 @@ export async function fetchCandlesFromGeckoTerminal(
   let beforeTs: number | undefined = timeTo + getIntervalSeconds(timeframe)
 
   for (let page = 0; page < MAX_PAGES; page++) {
-    // Delay between pages to avoid rate limiting (skip first page)
-    if (page > 0) {
-      await new Promise(resolve => setTimeout(resolve, 300))
-    }
-
     const candles = await fetchOhlcvPage(poolAddress, tf, aggregate, beforeTs, PAGE_LIMIT)
 
     if (candles.length === 0) break
