@@ -91,6 +91,54 @@ export const ChartReplay: React.FC<ChartReplayProps> = ({
 
   return (
     <AbsoluteFill style={{ backgroundColor: '#0a0a0a' }}>
+      {/* Watermark for free users - behind candlesticks */}
+      {!isPro && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            opacity: 0.15,
+            zIndex: 0,
+          }}
+        >
+          <Img
+            src={staticFile('motionclipswatermark.jpeg')}
+            style={{
+              width: width * 0.4,
+              height: 'auto',
+            }}
+          />
+        </div>
+      )}
+
+      {/* Token name at top of chart */}
+      {tokenSymbol && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 20,
+            left: 24,
+            zIndex: 10,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          <span
+            style={{
+              fontSize: 22,
+              fontWeight: 700,
+              color: '#ffffff',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            {tokenSymbol}
+          </span>
+        </div>
+      )}
+
       <CandlestickCanvas
         candles={candles}
         width={width}
@@ -99,26 +147,6 @@ export const ChartReplay: React.FC<ChartReplayProps> = ({
         exitMarker={showExitMarker ? exitMarker : null}
         visibleCandleCount={visibleCandleCount}
       />
-
-      {/* Watermark for free users */}
-      {!isPro && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 30,
-            left: 30,
-            opacity: 0.85,
-          }}
-        >
-          <Img
-            src={staticFile('motionclipswatermark.jpeg')}
-            style={{
-              height: 120,
-              width: 'auto',
-            }}
-          />
-        </div>
-      )}
 
       {/* P&L Card - appears after exit with slide-in animation */}
       {showPnlCard && tradeStats && (
