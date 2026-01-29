@@ -105,15 +105,15 @@ export const ChartReplay: React.FC<ChartReplayProps> = ({
         <div
           style={{
             position: 'absolute',
-            bottom: 30,
-            right: 30,
-            opacity: 0.7,
+            top: 30,
+            left: 30,
+            opacity: 0.85,
           }}
         >
           <Img
             src={staticFile('motionclipswatermark.jpeg')}
             style={{
-              height: 60,
+              height: 120,
               width: 'auto',
             }}
           />
