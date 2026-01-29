@@ -19,19 +19,14 @@ const faqs = [
       'You can find your transaction hashes on any Solana explorer like Solscan or Solana FM. Look for your wallet address, find the buy and sell transactions for your trade, and copy the transaction signatures.',
   },
   {
-    question: 'What video quality can I export?',
-    answer:
-      'Free users can export videos in 1080p HD quality. Pro users get access to 4K ultra HD exports for the sharpest, most professional-looking videos.',
-  },
-  {
     question: 'How long does rendering take?',
     answer:
-      'Most videos render in under 30 seconds. Complex trades with longer timeframes may take up to a minute. Pro users get priority in the rendering queue.',
+      'Most clips render in under a minute. Pro users get priority in the queue, so your clips render first.',
   },
   {
-    question: 'Can I share directly to Twitter/X?',
+    question: 'Can I share my clips on Twitter/X?',
     answer:
-      'Yes! Pro users can share their trade replay videos directly to Twitter with a pre-filled caption showing their P&L. Free users can download and share manually.',
+      'Yes. After downloading your clip, you can share it anywhere -- Twitter, Discord, Telegram. The share button pre-fills a tweet with your P&L.',
   },
   {
     question: 'What happens when I hit my free limit?',
@@ -46,7 +41,12 @@ const faqs = [
   {
     question: 'Is my data secure?',
     answer:
-      'Yes. We only store your transaction hashes and video data. We never have access to your wallet or private keys. All data is encrypted and securely stored.',
+      'We only use your transaction hashes to fetch public on-chain data. We never access your wallet, private keys, or funds. Your data is encrypted and stored securely.',
+  },
+  {
+    question: 'Do I need to be recording my screen during the trade?',
+    answer:
+      "No -- that's the whole point. Clips works retroactively. Trade first, paste your hashes after, and we reconstruct the chart replay from on-chain data. No setup, no recording software.",
   },
 ]
 
@@ -59,10 +59,10 @@ export function FAQ() {
         {/* Header */}
         <div className="text-center mb-16">
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-            Frequently Asked Questions
+            Questions? Answers.
           </h2>
           <p className="text-gray-400">
-            Got questions? We&apos;ve got answers.
+            Everything you need to know about Clips.
           </p>
         </div>
 

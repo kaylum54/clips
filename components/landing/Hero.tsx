@@ -56,22 +56,22 @@ export function Hero() {
         {/* Badge */}
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-500/10 border border-green-500/20 rounded-full mb-8">
           <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-          <span className="text-sm text-green-400 font-medium">Now supporting all Solana tokens</span>
+          <span className="text-sm text-green-400 font-medium">Now live — chart replays for every Solana token</span>
         </div>
 
         {/* Headline */}
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6 tracking-tight">
-          Turn Your Trades Into
+          Hit a 10x But Forgot to Record?
           <br />
           <span className="bg-gradient-to-r from-green-400 to-green-500 bg-clip-text text-transparent">
-            Shareable Replays
+            We Got You.
           </span>
         </h1>
 
         {/* Subheadline */}
         <p className="text-lg sm:text-xl text-[#a1a1aa] max-w-2xl mx-auto mb-10">
-          Create professional chart replay clips from your Solana trades in seconds.
-          Mark your entries and exits, watch the action unfold, and share your wins.
+          Create chart replay videos from your Solana trades in seconds. Watch the candles
+          move, see your entry and exit, and share the clip that proves you nailed it.
         </p>
 
         {/* CTA Buttons */}
@@ -86,7 +86,7 @@ export function Hero() {
             href="#how-it-works"
             className="w-full sm:w-auto px-8 py-4 bg-[#1a1a1a] hover:bg-[#222222] text-white font-medium text-lg rounded-lg border border-[#333333] transition-colors"
           >
-            See How It Works
+            See an Example
           </a>
         </div>
 
@@ -191,21 +191,21 @@ export function Hero() {
             <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
             </svg>
-            5 free renders/month
+            Free to start — no credit card needed
           </span>
           <span className="hidden sm:inline text-[#3a3a3a]">•</span>
           <span className="flex items-center gap-2">
             <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
             </svg>
-            Quick signup with Google
+            Works with every Solana token
           </span>
           <span className="hidden sm:inline text-[#3a3a3a]">•</span>
           <span className="flex items-center gap-2">
             <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
             </svg>
-            Works with any Solana token
+            Renders in under 60 seconds
           </span>
         </div>
       </div>

@@ -410,6 +410,7 @@ export default function ChartContainer({
             <StatsOverlay
               currentCandle={currentCandle}
               firstCandle={firstCandle}
+              tokenSymbol={tokenSymbol}
             />
             <TradeStats
               stats={tradeStats}

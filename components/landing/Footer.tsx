@@ -22,8 +22,7 @@ export function Footer() {
               />
             </Link>
             <p className="text-gray-400 max-w-sm">
-              Turn your Solana trades into shareable video replays.
-              Perfect for content creators, traders, and analysts.
+              The fastest way to turn Solana trades into shareable video content.
             </p>
           </div>
 

@@ -22,7 +22,7 @@ export function CTA() {
 
       <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 className="text-3xl sm:text-4xl font-bold text-white mb-8">
-          Ready to share your wins?
+          Your Best Trade Deserves a Replay
         </h2>
 
         <Link
@@ -36,7 +36,7 @@ export function CTA() {
         </Link>
 
         <p className="mt-6 text-sm text-[#71717a]">
-          5 free renders/month • Unlimited with Pro
+          Free to start. No credit card required.
         </p>
       </div>
     </section>

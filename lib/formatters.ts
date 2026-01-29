@@ -91,3 +91,13 @@ export function formatVolume(volume: number): string {
 export function shortenAddress(address: string, chars = 4): string {
   return `${address.slice(0, chars)}...${address.slice(-chars)}`
 }
+
+/**
+ * Formats a token label for display on charts and videos.
+ * Returns "$SYMBOL" if symbol is available, otherwise a truncated address.
+ */
+export function formatTokenLabel(symbol?: string, address?: string): string {
+  if (symbol) return `$${symbol}`
+  if (address) return shortenAddress(address)
+  return ''
+}

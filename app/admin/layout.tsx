@@ -6,7 +6,15 @@
  * This layout only renders for authenticated admins
  */
 
+import type { Metadata } from 'next'
 import { Sidebar } from '@/components/admin/Sidebar'
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+}
 
 export default function AdminLayout({
   children,

@@ -7,20 +7,20 @@ const steps = [
   {
     number: 1,
     icon: '📋',
-    title: 'Paste',
-    description: 'Paste any Solana token contract address',
+    title: 'Paste Your Hashes',
+    description: 'Drop in your entry and exit transaction signatures from Phantom or Solscan.',
   },
   {
     number: 2,
     icon: '📍',
-    title: 'Mark',
-    description: 'Click to mark your entry and exit points',
+    title: 'Watch It Build',
+    description: 'Clips pulls the on-chain data and reconstructs the chart with your exact trade marked.',
   },
   {
     number: 3,
     icon: '▶️',
-    title: 'Play',
-    description: 'Watch your trade unfold in real-time',
+    title: 'Render & Share',
+    description: 'Generate a video replay and share it on Twitter, Discord, or anywhere.',
   },
 ]
 
@@ -31,10 +31,10 @@ export function HowItWorks() {
         {/* Header */}
         <div className="text-center mb-16">
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-            How It Works
+            From Transaction to Video in Seconds
           </h2>
           <p className="text-[#a1a1aa] max-w-xl mx-auto">
-            Create professional trade replay clips in three simple steps
+            No screen recording. No video editing. Just paste, mark, and play.
           </p>
         </div>
 

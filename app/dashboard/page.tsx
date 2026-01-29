@@ -10,6 +10,7 @@ import { UpgradeModal } from '@/components/UpgradeModal'
 import { useCandleData } from '@/hooks/useCandleData'
 import { useUser } from '@/hooks/useUser'
 import type { Candle, ParsedSwap, PendingTrade } from '@/types'
+import { formatTokenLabel } from '@/lib/formatters'
 
 // Copy icon SVG component
 function CopyIcon({ className }: { className?: string }) {
@@ -382,7 +383,7 @@ export default function Home() {
           onDisplayModeChange={setDisplayMode}
           pendingTrade={pendingTrade}
           onTradeProcessed={handleTradeProcessed}
-          tokenSymbol={tokenInfo?.symbol}
+          tokenSymbol={formatTokenLabel(tokenInfo?.symbol, tokenInfo?.address)}
         />
 
         {/* Keyboard shortcuts hint */}

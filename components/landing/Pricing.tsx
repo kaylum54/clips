@@ -13,13 +13,13 @@ const plans = [
     name: 'Free',
     price: '$0',
     period: 'forever',
-    description: 'Perfect for trying out Clips',
+    description: 'Get started with 5 clips per month',
     features: [
       '5 video renders per month',
       '1080p video quality',
       'All chart timeframes',
-      'Download videos',
-      'Basic support',
+      'Download your clips',
+      'All Solana tokens supported',
     ],
     cta: 'Get Started',
     href: '/auth/signup',
@@ -29,15 +29,14 @@ const plans = [
     name: 'Pro',
     price: '$20',
     period: '/month',
-    description: 'For serious traders and creators',
+    description: 'Unlimited clips. Priority rendering. No limits.',
     features: [
       'Unlimited video renders',
-      '4K video quality',
-      'Priority rendering queue',
-      'Save & manage trades',
+      'Priority render queue (skip the line)',
+      'Save & organize your trades',
       'Public profile page',
-      'Leaderboard access',
-      'Twitter share integration',
+      'Leaderboard eligibility',
+      'Make trades public or private',
       'Priority support',
     ],
     cta: 'Upgrade to Pro',
@@ -55,10 +54,10 @@ export function Pricing() {
         {/* Header */}
         <div className="text-center mb-16">
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-            Simple, Transparent Pricing
+            Start Free. Upgrade When You&apos;re Addicted.
           </h2>
           <p className="text-gray-400 max-w-2xl mx-auto">
-            Start free, upgrade when you need more. No hidden fees, cancel anytime.
+            No hidden fees, cancel anytime.
           </p>
         </div>
 

@@ -13,10 +13,54 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://clips.app'
+
 export const metadata: Metadata = {
-  title: "Clips - Solana Chart Replay",
-  description: "Replay historical Solana token charts for content creation. Mark your entries and exits, control playback, and capture your best trades.",
-  keywords: ["solana", "crypto", "trading", "chart", "replay", "memecoin", "content creation"],
+  metadataBase: new URL(baseUrl),
+  title: {
+    default: "Clips - Replay Your Solana Trades for CT Content",
+    template: "%s | Clips",
+  },
+  description: "Turn your memecoin trades into shareable chart replays. Paste transaction hashes, watch your entry and exit play back, and create content that goes viral on Crypto Twitter. Free forever.",
+  keywords: ["solana", "chart replay", "trade videos", "memecoin", "content creation", "trading tool", "solana trading", "crypto content"],
+  authors: [{ name: "Clips" }],
+  creator: "Clips",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: baseUrl,
+    siteName: "Clips",
+    title: "Clips - Replay Your Solana Trades",
+    description: "Hit a 10x but forgot to record? Replay any Solana trade with perfect entry/exit markers. Free forever.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Clips - Chart Replay Video Tool for Solana Traders",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Clips - Replay Your Solana Trades",
+    description: "Hit a 10x but forgot to record? Replay any Solana trade with perfect entry/exit markers. Free forever.",
+    images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large" as const,
+      "max-snippet": -1,
+    },
+  },
+  alternates: {
+    canonical: baseUrl,
+  },
 };
 
 export default function RootLayout({
