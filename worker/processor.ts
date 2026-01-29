@@ -100,13 +100,9 @@ async function updateJobProgress(jobId: string, progress: number) {
   }
 }
 
-async function incrementRenderCount(userId: string, tokenSymbol?: string, pnlPercent?: number) {
-  // Increment render count (type assertion - rpc not in generated types)
-  const { error: rpcError } = await (getSupabase() as any).rpc('increment_render_count', { user_uuid: userId })
-
-  if (rpcError) {
-    console.error('[Worker] Failed to increment render count:', rpcError)
-  }
+async function recordRenderHistory(userId: string, tokenSymbol?: string, pnlPercent?: number) {
+  // Note: renders_this_month is now incremented at render START time in /api/render/start
+  // This function only records the render in the history table
 
   // Record render in history (type assertion - renders table not in generated types)
   const { error: insertError } = await (getSupabase()
@@ -220,8 +216,8 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
       ? ((exitMarker.price - entryMarker.price) / entryMarker.price) * 100
       : undefined
 
-    // Increment user's render count
-    await incrementRenderCount(userId, tokenSymbol, pnlPercent)
+    // Record render in history table (count already incremented at start time)
+    await recordRenderHistory(userId, tokenSymbol, pnlPercent)
 
     return {
       tempFilePath: outputPath,

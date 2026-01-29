@@ -50,8 +50,8 @@ export function Sidebar() {
           <Image
             src="/motionlogo1.png"
             alt="Clips"
-            width={60}
-            height={20}
+            width={317}
+            height={40}
             className="h-5 w-auto"
           />
           <span className="px-2 py-0.5 bg-red-500/10 text-red-400 text-xs font-medium rounded">

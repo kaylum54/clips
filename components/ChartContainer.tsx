@@ -266,7 +266,11 @@ export default function ChartContainer({
       startIndex: entry.candleIndex,
       endIndex,
     })
-  }, [entry, exit, candles, speed, tokenSymbol, renderJob, canRender])
+
+    // Refresh profile immediately to update render counter
+    // (server increments renders_this_month at start time)
+    await refreshProfile()
+  }, [entry, exit, candles, speed, tokenSymbol, renderJob, canRender, refreshProfile])
 
   // Handle modal close
   const handleRenderModalClose = useCallback(async () => {

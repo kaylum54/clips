@@ -47,8 +47,8 @@ export function DashboardHeader() {
         <Image
           src="/motionlogo1.png"
           alt="Clips"
-          width={60}
-          height={20}
+          width={317}
+          height={40}
           className="h-5 w-auto"
         />
       </Link>
