@@ -113,7 +113,7 @@ export default function Chart({
         lines: [
           {
             text: tokenSymbol,
-            color: 'rgba(255, 255, 255, 0.07)',
+            color: 'rgba(255, 255, 255, 0.15)',
             fontSize: 48,
           },
         ],
@@ -176,7 +176,7 @@ export default function Chart({
         lines: [
           {
             text: tokenSymbol,
-            color: 'rgba(255, 255, 255, 0.07)',
+            color: 'rgba(255, 255, 255, 0.15)',
             fontSize: 48,
           },
         ],
