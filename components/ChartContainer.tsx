@@ -61,7 +61,7 @@ export default function ChartContainer({
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
 
   // User subscription and render limits
-  const { canRender, isPro, rendersRemaining, renderLimit, isAuthenticated } = useUser()
+  const { canRender, isPro, rendersRemaining, renderLimit, isAuthenticated, refreshProfile } = useUser()
 
   // Async render job hook
   const renderJob = useRenderJob()
@@ -269,13 +269,15 @@ export default function ChartContainer({
   }, [entry, exit, candles, speed, tokenSymbol, renderJob, canRender])
 
   // Handle modal close
-  const handleRenderModalClose = useCallback(() => {
+  const handleRenderModalClose = useCallback(async () => {
     setIsRenderModalOpen(false)
     // Reset render job state if completed or failed
     if (renderJob.status === 'completed' || renderJob.status === 'failed') {
       renderJob.reset()
+      // Refresh profile to update render count from server
+      await refreshProfile()
     }
-  }, [renderJob])
+  }, [renderJob, refreshProfile])
 
   // Handle retry
   const handleRenderRetry = useCallback(async () => {

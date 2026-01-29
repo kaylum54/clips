@@ -42,7 +42,7 @@ function ExternalLinkIcon({ className }: { className?: string }) {
 }
 
 export default function Home() {
-  const { isAuthenticated, isPro, canRender } = useUser()
+  const { isAuthenticated, isPro, canRender, renderLimit, rendersRemaining, refreshProfile } = useUser()
   const [pendingTrade, setPendingTrade] = useState<PendingTrade | null>(null)
   const [copied, setCopied] = useState(false)
   const [displayCandles, setDisplayCandles] = useState<Candle[]>([])
@@ -272,8 +272,37 @@ export default function Home() {
           </p>
         </div>
 
+        {/* Render Limit Exhausted Banner */}
+        {isAuthenticated && !canRender && !isPro && (
+          <div className="mb-6 bg-gradient-to-r from-amber-900/40 to-orange-900/40 border border-amber-600/50 rounded-2xl p-5">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-amber-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg className="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-amber-200 font-semibold text-lg">
+                    You&apos;ve used all {renderLimit} free renders this month
+                  </p>
+                  <p className="text-amber-300/70 text-sm mt-1">
+                    Upgrade to Pro for unlimited renders, priority queue, and more.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowUpgradeModal(true)}
+                className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-black font-semibold rounded-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_20px_rgba(34,197,94,0.4)] flex-shrink-0"
+              >
+                Upgrade to Pro
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Transaction Input */}
-        <div className="mb-6 bg-gradient-to-b from-[#141414] to-[#111111] border border-[#1f1f1f] rounded-2xl p-6 shadow-[0_4px_24px_rgba(0,0,0,0.3)]">
+        <div className={`mb-6 bg-gradient-to-b from-[#141414] to-[#111111] border border-[#1f1f1f] rounded-2xl p-6 shadow-[0_4px_24px_rgba(0,0,0,0.3)] ${!canRender && !isPro ? 'opacity-50 pointer-events-none' : ''}`}>
           <TransactionInput
             onSubmit={handleTradeSubmit}
             isLoading={isLoading}
