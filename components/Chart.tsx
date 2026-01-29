@@ -103,7 +103,7 @@ export default function Chart({
       },
     })
 
-    // Add text watermark for token symbol
+    // Add text watermark for token symbol (matches rendered video style)
     if (tokenSymbol) {
       const pane = chart.panes()[0]
       watermarkRef.current = createTextWatermark(pane, {
@@ -113,8 +113,9 @@ export default function Chart({
         lines: [
           {
             text: tokenSymbol,
-            color: 'rgba(255, 255, 255, 0.15)',
-            fontSize: 48,
+            color: 'rgba(255, 255, 255, 0.25)',
+            fontSize: 72,
+            fontFamily: "'Inter', 'Helvetica Neue', sans-serif",
           },
         ],
       })
@@ -166,7 +167,7 @@ export default function Chart({
       watermarkRef.current = null
     }
 
-    // Create new watermark if symbol exists
+    // Create new watermark if symbol exists (matches rendered video style)
     if (tokenSymbol) {
       const pane = chartRef.current.panes()[0]
       watermarkRef.current = createTextWatermark(pane, {
@@ -176,8 +177,9 @@ export default function Chart({
         lines: [
           {
             text: tokenSymbol,
-            color: 'rgba(255, 255, 255, 0.15)',
-            fontSize: 48,
+            color: 'rgba(255, 255, 255, 0.25)',
+            fontSize: 72,
+            fontFamily: "'Inter', 'Helvetica Neue', sans-serif",
           },
         ],
       })

@@ -58,14 +58,18 @@ export const ChartReplay: React.FC<ChartReplayProps> = ({
     ? (exitMarker.candleIndex - startIndex) * framesPerCandle
     : Infinity
 
-  // Calculate trade stats
+  // Calculate trade stats using actual on-chain prices when available
   const tradeStats: TradeStats | null = entryMarker && exitMarker
-    ? {
-        entryPrice: entryMarker.price,
-        exitPrice: exitMarker.price,
-        pnlPercent: ((exitMarker.price - entryMarker.price) / entryMarker.price) * 100,
-        isProfit: exitMarker.price >= entryMarker.price,
-      }
+    ? (() => {
+        const entryP = entryMarker.actualPrice ?? entryMarker.price
+        const exitP = exitMarker.actualPrice ?? exitMarker.price
+        return {
+          entryPrice: entryMarker.price,
+          exitPrice: exitMarker.price,
+          pnlPercent: entryP > 0 ? ((exitP - entryP) / entryP) * 100 : 0,
+          isProfit: exitP >= entryP,
+        }
+      })()
     : null
 
   // P&L card animation - starts 30 frames after exit appears

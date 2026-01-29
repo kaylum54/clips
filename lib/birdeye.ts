@@ -25,21 +25,15 @@ export function transformCandles(items: BirdeyeOHLCVItem[]): Candle[] {
 }
 
 /**
- * Fetches OHLCV candle data from Birdeye API
- * Should only be called from server-side (API routes)
+ * Fetches a single page of OHLCV candle data from Birdeye API
  */
-export async function fetchCandlesFromBirdeye(
+async function fetchCandlePage(
+  apiKey: string,
   address: string,
   timeframe: Timeframe,
   timeFrom: number,
   timeTo: number
 ): Promise<Candle[]> {
-  const apiKey = process.env.BIRDEYE_API_KEY
-
-  if (!apiKey) {
-    throw new Error('BIRDEYE_API_KEY is not configured')
-  }
-
   const params = new URLSearchParams({
     address,
     type: getTimeframeValue(timeframe),
@@ -72,6 +66,68 @@ export async function fetchCandlesFromBirdeye(
   }
 
   return transformCandles(data.data.items)
+}
+
+// Birdeye caps responses at ~1000 items per request
+const BIRDEYE_PAGE_LIMIT = 950
+
+/**
+ * Fetches OHLCV candle data from Birdeye API with automatic pagination.
+ * Birdeye caps at ~1000 candles per request. For long time ranges on small
+ * timeframes (e.g. 1m over 4 days), this fetches multiple pages.
+ * Should only be called from server-side (API routes)
+ */
+export async function fetchCandlesFromBirdeye(
+  address: string,
+  timeframe: Timeframe,
+  timeFrom: number,
+  timeTo: number
+): Promise<Candle[]> {
+  const apiKey = process.env.BIRDEYE_API_KEY
+
+  if (!apiKey) {
+    throw new Error('BIRDEYE_API_KEY is not configured')
+  }
+
+  const allCandles: Candle[] = []
+  let currentFrom = timeFrom
+  const maxPages = 10 // Safety limit to prevent infinite loops
+
+  for (let page = 0; page < maxPages; page++) {
+    // Add delay between pages to avoid rate limiting (skip first page)
+    if (page > 0) {
+      await new Promise(resolve => setTimeout(resolve, 500))
+    }
+
+    const candles = await fetchCandlePage(apiKey, address, timeframe, currentFrom, timeTo)
+
+    if (candles.length === 0) break
+
+    allCandles.push(...candles)
+
+    // If we got fewer than the limit, we have all the data
+    if (candles.length < BIRDEYE_PAGE_LIMIT) break
+
+    // Move time_from to just after the last candle's timestamp
+    const lastCandle = candles[candles.length - 1]
+    currentFrom = lastCandle.time + 1
+
+    // Safety: if we've passed timeTo, stop
+    if (currentFrom >= timeTo) break
+  }
+
+  // Deduplicate by timestamp (in case of overlap between pages)
+  const seen = new Set<number>()
+  const deduplicated = allCandles.filter(c => {
+    if (seen.has(c.time)) return false
+    seen.add(c.time)
+    return true
+  })
+
+  // Sort by time ascending
+  deduplicated.sort((a, b) => a.time - b.time)
+
+  return deduplicated
 }
 
 export interface TokenMetadata {
