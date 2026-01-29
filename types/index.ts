@@ -1,4 +1,4 @@
-// Candle data from Birdeye API
+// Candle data (OHLCV)
 export interface Candle {
   time: number      // Unix timestamp in seconds
   open: number
@@ -67,22 +67,6 @@ export interface TradeStats {
   isProfit: boolean
 }
 
-// Birdeye API response types
-export interface BirdeyeOHLCVItem {
-  unixTime: number
-  o: number  // open
-  h: number  // high
-  l: number  // low
-  c: number  // close
-  v: number  // volume
-}
-
-export interface BirdeyeResponse {
-  success: boolean
-  data: {
-    items: BirdeyeOHLCVItem[]
-  }
-}
 
 // Internal API response
 export interface CandleResponse {

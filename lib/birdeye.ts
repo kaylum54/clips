@@ -1,134 +1,4 @@
-import type { Timeframe, BirdeyeResponse, Candle, BirdeyeOHLCVItem } from '@/types'
-
 const BIRDEYE_API_BASE = 'https://public-api.birdeye.so'
-
-/**
- * Converts Birdeye timeframe to API format
- */
-export function getTimeframeValue(timeframe: Timeframe): string {
-  // Birdeye uses lowercase for minutes and uppercase for hours/days
-  return timeframe
-}
-
-/**
- * Transforms Birdeye OHLCV data to our Candle format
- */
-export function transformCandles(items: BirdeyeOHLCVItem[]): Candle[] {
-  return items.map(item => ({
-    time: item.unixTime,
-    open: item.o,
-    high: item.h,
-    low: item.l,
-    close: item.c,
-    volume: item.v,
-  }))
-}
-
-/**
- * Fetches a single page of OHLCV candle data from Birdeye API
- */
-async function fetchCandlePage(
-  apiKey: string,
-  address: string,
-  timeframe: Timeframe,
-  timeFrom: number,
-  timeTo: number
-): Promise<Candle[]> {
-  const params = new URLSearchParams({
-    address,
-    type: getTimeframeValue(timeframe),
-    time_from: String(timeFrom),
-    time_to: String(timeTo),
-  })
-
-  const url = `${BIRDEYE_API_BASE}/defi/ohlcv?${params}`
-
-  const response = await fetch(url, {
-    headers: {
-      'X-API-KEY': apiKey,
-    },
-  })
-
-  if (!response.ok) {
-    if (response.status === 429) {
-      throw new Error('Rate limited. Please try again later.')
-    }
-    if (response.status === 404) {
-      throw new Error('Token not found')
-    }
-    throw new Error(`Birdeye API error: ${response.status}`)
-  }
-
-  const data: BirdeyeResponse = await response.json()
-
-  if (!data.success || !data.data?.items) {
-    throw new Error('Invalid response from Birdeye API')
-  }
-
-  return transformCandles(data.data.items)
-}
-
-// Birdeye caps responses at ~1000 items per request
-const BIRDEYE_PAGE_LIMIT = 950
-
-/**
- * Fetches OHLCV candle data from Birdeye API with automatic pagination.
- * Birdeye caps at ~1000 candles per request. For long time ranges on small
- * timeframes (e.g. 1m over 4 days), this fetches multiple pages.
- * Should only be called from server-side (API routes)
- */
-export async function fetchCandlesFromBirdeye(
-  address: string,
-  timeframe: Timeframe,
-  timeFrom: number,
-  timeTo: number
-): Promise<Candle[]> {
-  const apiKey = process.env.BIRDEYE_API_KEY
-
-  if (!apiKey) {
-    throw new Error('BIRDEYE_API_KEY is not configured')
-  }
-
-  const allCandles: Candle[] = []
-  let currentFrom = timeFrom
-  const maxPages = 10 // Safety limit to prevent infinite loops
-
-  for (let page = 0; page < maxPages; page++) {
-    // Add delay between pages to avoid rate limiting (skip first page)
-    if (page > 0) {
-      await new Promise(resolve => setTimeout(resolve, 500))
-    }
-
-    const candles = await fetchCandlePage(apiKey, address, timeframe, currentFrom, timeTo)
-
-    if (candles.length === 0) break
-
-    allCandles.push(...candles)
-
-    // If we got fewer than the limit, we have all the data
-    if (candles.length < BIRDEYE_PAGE_LIMIT) break
-
-    // Move time_from to just after the last candle's timestamp
-    const lastCandle = candles[candles.length - 1]
-    currentFrom = lastCandle.time + 1
-
-    // Safety: if we've passed timeTo, stop
-    if (currentFrom >= timeTo) break
-  }
-
-  // Deduplicate by timestamp (in case of overlap between pages)
-  const seen = new Set<number>()
-  const deduplicated = allCandles.filter(c => {
-    if (seen.has(c.time)) return false
-    seen.add(c.time)
-    return true
-  })
-
-  // Sort by time ascending
-  deduplicated.sort((a, b) => a.time - b.time)
-
-  return deduplicated
-}
 
 export interface TokenMetadata {
   symbol: string
@@ -158,6 +28,7 @@ async function fetchTokenInfoFromDexScreener(address: string): Promise<TokenMeta
     }
 
     // Find the pair where our address is the base token
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const pair = pairs.find((p: any) => p.baseToken?.address === address) || pairs[0]
     const token = pair.baseToken?.address === address ? pair.baseToken : pair.quoteToken
 
@@ -256,15 +127,3 @@ async function fetchTokenInfoFromBirdeye(address: string): Promise<TokenMetadata
   }
 }
 
-/**
- * Transforms candle prices to market cap values
- */
-export function transformCandlesToMarketCap(candles: Candle[], supply: number): Candle[] {
-  return candles.map(candle => ({
-    ...candle,
-    open: candle.open * supply,
-    high: candle.high * supply,
-    low: candle.low * supply,
-    close: candle.close * supply,
-  }))
-}

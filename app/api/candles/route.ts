@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { fetchCandlesFromBirdeye, fetchTokenInfo, transformCandlesToMarketCap, TokenMetadata } from '@/lib/birdeye'
+import { fetchCandlesFromGeckoTerminal, transformCandlesToMarketCap } from '@/lib/geckoterminal'
+import { fetchTokenInfo, TokenMetadata } from '@/lib/birdeye'
 import { isValidSolanaAddress } from '@/lib/validation'
 import { DATE_RANGES, DEFAULT_DATE_RANGE, DEFAULT_TIMEFRAME, MAX_CANDLES } from '@/lib/constants'
 import type { Timeframe, DateRange, CandleResponse, DisplayMode, Candle } from '@/types'
@@ -87,11 +88,11 @@ export async function GET(request: NextRequest) {
       // Fetch candles (always needed)
       // Only fetch token info if not skipped (client doesn't have it cached)
       if (skipTokenInfo) {
-        candles = await fetchCandlesFromBirdeye(address, timeframe, timeFrom, timeTo)
+        candles = await fetchCandlesFromGeckoTerminal(address, timeframe, timeFrom, timeTo)
       } else {
         // Fetch in parallel only when we need both
         const [candlesResult, tokenInfoResult] = await Promise.all([
-          fetchCandlesFromBirdeye(address, timeframe, timeFrom, timeTo),
+          fetchCandlesFromGeckoTerminal(address, timeframe, timeFrom, timeTo),
           fetchTokenInfo(address),
         ])
         candles = candlesResult
