@@ -4,7 +4,6 @@ import { useCallback, useMemo, useEffect, useRef, useState } from 'react'
 import type { Candle, Timeframe, DateRange, DisplayMode, PendingTrade } from '@/types'
 import Chart from './Chart'
 import StatsOverlay from './StatsOverlay'
-import TradeStats from './TradeStats'
 import MarkerControls from './MarkerControls'
 import PlaybackControls from './PlaybackControls'
 import SpeedSelector from './SpeedSelector'
@@ -55,8 +54,6 @@ export default function ChartContainer({
   tokenSymbol,
 }: ChartContainerProps) {
   const processedTradeRef = useRef<string | null>(null)
-  const hasPlayedRef = useRef(false)
-  const [isPnlMinimized, setIsPnlMinimized] = useState(false)
   const [isRenderModalOpen, setIsRenderModalOpen] = useState(false)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
 
@@ -90,7 +87,6 @@ export default function ChartContainer({
     exit,
     isPlacingEntry,
     isPlacingExit,
-    tradeStats,
     startPlacingEntry,
     startPlacingExit,
     cancelPlacing,
@@ -202,24 +198,6 @@ export default function ChartContainer({
     if (!exit) return false
     return playheadIndex >= exit.candleIndex
   }, [exit, playheadIndex])
-
-  // Track if playback has ever been started
-  if (isPlaying) {
-    hasPlayedRef.current = true
-  }
-
-  // Check if trade is complete (exit marker reached and has played)
-  const isTradeComplete = showExitMarker && !!tradeStats && hasPlayedRef.current
-
-  // Auto-show PnL card when trade completes
-  useEffect(() => {
-    if (isTradeComplete) {
-      setIsPnlMinimized(false)
-    }
-  }, [isTradeComplete])
-
-  // Show trade stats only if trade complete AND not minimized
-  const showTradeStats = isTradeComplete && !isPnlMinimized
 
   // Current and first candle for stats overlay
   const currentCandle = visibleCandles[visibleCandles.length - 1] || null
@@ -385,27 +363,6 @@ export default function ChartContainer({
 
       {/* Chart Area */}
       <div className={`relative ${isFullscreen ? 'flex-1' : ''}`}>
-        {/* PnL Toggle Button - shows when trade is complete */}
-        {isTradeComplete && (
-          <button
-            onClick={() => setIsPnlMinimized(!isPnlMinimized)}
-            className={`
-              absolute top-3 right-3 z-20 px-3 py-1.5 rounded-lg
-              flex items-center gap-2 text-sm font-medium
-              transition-all duration-200
-              ${isPnlMinimized
-                ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
-                : 'bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-400'
-              }
-            `}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-              <path fillRule="evenodd" d="M4.5 2A1.5 1.5 0 003 3.5v13A1.5 1.5 0 004.5 18h11a1.5 1.5 0 001.5-1.5V7.621a1.5 1.5 0 00-.44-1.06l-4.12-4.122A1.5 1.5 0 0011.378 2H4.5zm4.75 6.75a.75.75 0 011.5 0v2.546l.943-1.048a.75.75 0 011.114 1.004l-2.25 2.5a.75.75 0 01-1.114 0l-2.25-2.5a.75.75 0 111.114-1.004l.943 1.048V8.75z" clipRule="evenodd" />
-            </svg>
-            {isPnlMinimized ? 'Show P&L' : 'Hide P&L'}
-          </button>
-        )}
-
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-zinc-900/80 z-20">
             <LoadingSpinner size="lg" />
@@ -421,11 +378,6 @@ export default function ChartContainer({
             <StatsOverlay
               currentCandle={currentCandle}
               firstCandle={firstCandle}
-            />
-            <TradeStats
-              stats={tradeStats}
-              isVisible={showTradeStats}
-              onClose={() => setIsPnlMinimized(true)}
             />
             <Chart
               candles={candles}

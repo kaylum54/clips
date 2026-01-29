@@ -1,5 +1,5 @@
 import React from 'react'
-import { useCurrentFrame, useVideoConfig, AbsoluteFill, Img, staticFile, spring, interpolate } from 'remotion'
+import { useCurrentFrame, useVideoConfig, AbsoluteFill, Img, staticFile } from 'remotion'
 import { CandlestickCanvas } from '../components/CandlestickCanvas'
 import type { Candle, TradeMarker } from '@/types'
 
@@ -11,13 +11,6 @@ export interface ChartReplayProps {
   startIndex: number // Entry candle index - video starts with candles up to here visible
   tokenSymbol?: string
   isPro?: boolean
-}
-
-interface TradeStats {
-  entryPrice: number
-  exitPrice: number
-  pnlPercent: number
-  isProfit: boolean
 }
 
 // Base interval in ms at 1x speed
@@ -52,46 +45,6 @@ export const ChartReplay: React.FC<ChartReplayProps> = ({
   const showEntryMarker = entryMarker !== null
   // Exit marker appears when we've revealed enough candles
   const showExitMarker = exitMarker ? visibleCandleCount > exitMarker.candleIndex : false
-
-  // Calculate frame when exit marker appears
-  const exitAppearFrame = exitMarker
-    ? (exitMarker.candleIndex - startIndex) * framesPerCandle
-    : Infinity
-
-  // Calculate trade stats using actual on-chain prices when available
-  const tradeStats: TradeStats | null = entryMarker && exitMarker
-    ? (() => {
-        const entryP = entryMarker.actualPrice ?? entryMarker.price
-        const exitP = exitMarker.actualPrice ?? exitMarker.price
-        return {
-          entryPrice: entryMarker.price,
-          exitPrice: exitMarker.price,
-          pnlPercent: entryP > 0 ? ((exitP - entryP) / entryP) * 100 : 0,
-          isProfit: exitP >= entryP,
-        }
-      })()
-    : null
-
-  // P&L card animation - starts 30 frames after exit appears
-  const pnlCardDelay = 30
-  const pnlCardStartFrame = exitAppearFrame + pnlCardDelay
-  const showPnlCard = frame >= pnlCardStartFrame && tradeStats
-
-  // Animation for P&L card slide-in
-  const pnlCardProgress = showPnlCard
-    ? spring({
-        frame: frame - pnlCardStartFrame,
-        fps,
-        config: {
-          damping: 20,
-          stiffness: 100,
-          mass: 0.8,
-        },
-      })
-    : 0
-
-  const pnlCardX = interpolate(pnlCardProgress, [0, 1], [-400, 60])
-  const pnlCardOpacity = interpolate(pnlCardProgress, [0, 1], [0, 1])
 
   return (
     <AbsoluteFill style={{ backgroundColor: '#0a0a0a' }}>
@@ -149,100 +102,8 @@ export const ChartReplay: React.FC<ChartReplayProps> = ({
         exitMarker={showExitMarker ? exitMarker : null}
         visibleCandleCount={visibleCandleCount}
       />
-
-      {/* P&L Card - appears after exit with slide-in animation */}
-      {showPnlCard && tradeStats && (
-        <div
-          style={{
-            position: 'absolute',
-            left: pnlCardX,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            opacity: pnlCardOpacity,
-          }}
-        >
-          <div
-            style={{
-              position: 'relative',
-              width: 420,
-              height: 280,
-              borderRadius: 20,
-              overflow: 'hidden',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)',
-            }}
-          >
-            {/* Background image */}
-            <Img
-              src={staticFile('clipspnl4.jpeg')}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-              }}
-            />
-
-            {/* Stats overlay */}
-            <div
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: '50%',
-                bottom: 0,
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                padding: '20px 30px',
-              }}
-            >
-              {/* P&L Percentage */}
-              <div
-                style={{
-                  fontSize: 48,
-                  fontWeight: 800,
-                  color: tradeStats.isProfit ? '#22c55e' : '#ef4444',
-                  marginBottom: 16,
-                  textShadow: '0 2px 10px rgba(0,0,0,0.5)',
-                }}
-              >
-                {tradeStats.isProfit ? '+' : ''}{tradeStats.pnlPercent.toFixed(2)}%
-              </div>
-
-              {/* Entry Price */}
-              <div style={{ marginBottom: 8 }}>
-                <span style={{ color: '#9ca3af', fontSize: 14, fontWeight: 500 }}>Entry</span>
-                <div style={{ color: '#ffffff', fontSize: 20, fontWeight: 600 }}>
-                  ${formatPriceDisplay(tradeStats.entryPrice)}
-                </div>
-              </div>
-
-              {/* Exit Price */}
-              <div>
-                <span style={{ color: '#9ca3af', fontSize: 14, fontWeight: 500 }}>Exit</span>
-                <div style={{ color: '#ffffff', fontSize: 20, fontWeight: 600 }}>
-                  ${formatPriceDisplay(tradeStats.exitPrice)}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </AbsoluteFill>
   )
-}
-
-// Helper to format price for display
-function formatPriceDisplay(price: number): string {
-  if (price < 0.00001) {
-    return price.toExponential(4)
-  }
-  if (price < 0.01) {
-    return price.toFixed(8)
-  }
-  if (price < 1) {
-    return price.toFixed(6)
-  }
-  return price.toFixed(4)
 }
 
 /**
