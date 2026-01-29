@@ -7,7 +7,7 @@
  * Security: Manages session state and auth events
  */
 
-import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User, Session } from '@supabase/supabase-js'
 import type { Profile } from '@/types/database'
@@ -30,20 +30,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   const supabase = useMemo(() => createClient(), [])
+  const profileFetchedRef = useRef(false)
 
-  const fetchProfile = useCallback(async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single()
+  const fetchProfile = useCallback(async (userId: string): Promise<Profile | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single()
 
-    if (error) {
-      console.error('Error fetching profile:', error)
+      if (error) {
+        console.error('Error fetching profile:', error)
+        return null
+      }
+
+      return data
+    } catch (err) {
+      console.error('Profile fetch exception:', err)
       return null
     }
-
-    return data
   }, [supabase])
 
   const refreshProfile = useCallback(async () => {
@@ -60,45 +66,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null)
     setProfile(null)
     setSession(null)
+    profileFetchedRef.current = false
   }, [supabase.auth])
 
   useEffect(() => {
     let mounted = true
 
-    // Get initial session
-    const initAuth = async () => {
-      try {
-        // Timeout guard: getSession() can hang if cookies are malformed
-        const sessionPromise = supabase.auth.getSession()
-        const timeoutPromise = new Promise<null>((resolve) =>
-          setTimeout(() => resolve(null), 5000)
-        )
-
-        const result = await Promise.race([sessionPromise, timeoutPromise])
-        const initialSession = result && 'data' in result ? result.data.session : null
-
-        if (initialSession && mounted) {
-          setSession(initialSession)
-          setUser(initialSession.user)
-
-          // Fetch profile with its own timeout
-          try {
-            const profileData = await fetchProfile(initialSession.user.id)
-            if (mounted) setProfile(profileData)
-          } catch (profileError) {
-            console.error('Error fetching profile:', profileError)
-          }
-        }
-      } catch (error) {
-        console.error('Error initializing auth:', error)
-      } finally {
-        if (mounted) setLoading(false)
-      }
-    }
-
-    initAuth()
-
-    // Listen for auth changes
+    // Use onAuthStateChange as the single source of truth.
+    // It fires INITIAL_SESSION synchronously on subscribe, avoiding
+    // the getSession() hang that occurs in some @supabase/ssr versions.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
         if (!mounted) return
@@ -107,26 +83,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(currentSession?.user ?? null)
 
         if (currentSession?.user) {
-          // Fetch profile on auth state change
-          try {
+          // Only fetch profile once per mount, or on explicit auth events
+          if (!profileFetchedRef.current || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+            profileFetchedRef.current = true
             const profileData = await fetchProfile(currentSession.user.id)
             if (mounted) setProfile(profileData)
-          } catch {
-            // Profile fetch failed, continue without it
           }
         } else {
           setProfile(null)
+          profileFetchedRef.current = false
         }
 
-        // Handle specific events
         if (event === 'SIGNED_OUT') {
           setProfile(null)
+          profileFetchedRef.current = false
         }
+
+        // Always mark loading as done after first auth event
+        if (mounted) setLoading(false)
       }
     )
 
+    // Safety net: if onAuthStateChange never fires, still unblock the UI
+    const safetyTimeout = setTimeout(() => {
+      if (mounted) setLoading(false)
+    }, 3000)
+
     return () => {
       mounted = false
+      clearTimeout(safetyTimeout)
       subscription.unsubscribe()
     }
   }, [supabase.auth, fetchProfile])
