@@ -88,10 +88,11 @@ export function useCandleData(): UseCandleDataReturn {
         const data: CandleResponse = await response.json()
 
         if (!data.success) {
-          // Check if rate limited - retry with backoff
-          if (data.error?.toLowerCase().includes('rate') && attempt < maxRetries - 1) {
-            lastError = new Error(data.error)
-            // Exponential backoff: 1s, 2s, 4s
+          // Retry on rate limit or server errors with backoff
+          const isRetryable = data.error?.toLowerCase().includes('rate') ||
+            (response.status >= 500 && response.status < 600)
+          if (isRetryable && attempt < maxRetries - 1) {
+            lastError = new Error(data.error || `Server error (${response.status})`)
             await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000))
             continue
           }
@@ -129,14 +130,13 @@ export function useCandleData(): UseCandleDataReturn {
       } catch (err) {
         lastError = err instanceof Error ? err : new Error('Failed to load chart data')
 
-        // Check if rate limited - retry with backoff
-        if (lastError.message.toLowerCase().includes('rate') && attempt < maxRetries - 1) {
-          // Exponential backoff: 1s, 2s, 4s
+        // Retry on any error (network failures, rate limits, server errors)
+        if (attempt < maxRetries - 1) {
           await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000))
           continue
         }
 
-        // Not a rate limit error or out of retries - break
+        // Out of retries - break
         break
       }
     }
