@@ -28,7 +28,6 @@ interface RenderRequest {
   tokenSymbol?: string
   startIndex: number // Where playhead starts (entry)
   endIndex: number   // Where playhead ends (exit + buffer)
-  trackRender?: boolean // Whether to track this render against quota
 }
 
 // Cache the bundle path to avoid re-bundling on every request
@@ -135,7 +134,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body: RenderRequest = await request.json()
-    const { candles, entryMarker, exitMarker, speed, tokenSymbol, startIndex, endIndex, trackRender = true } = body
+    const { candles, entryMarker, exitMarker, speed, tokenSymbol, startIndex, endIndex } = body
 
     // Validate input
     if (!candles || !Array.isArray(candles) || candles.length === 0) {
@@ -249,23 +248,8 @@ export async function POST(request: NextRequest) {
 
     console.log('Render complete!')
 
-    // Track the render against user's quota (if trackRender is true)
-    if (trackRender) {
-      const renderEndTime = Date.now()
-
-      // Increment render count
-      await supabase.rpc('increment_render_count', { user_uuid: user.id })
-
-      // Record render in history
-      await supabase.from('renders').insert({
-        user_id: user.id,
-        token_symbol: tokenSymbol || null,
-        pnl_percent: entryMarker && exitMarker
-          ? ((exitMarker.price - entryMarker.price) / entryMarker.price) * 100
-          : null,
-        render_duration_ms: renderEndTime - (Date.now() - durationInFrames * 33), // Approximate
-      })
-    }
+    // Render count is now incremented at trade load time (in dashboard page)
+    // to prevent screen recording abuse. No need to increment again here.
 
     // Read the file and return it
     const videoBuffer = fs.readFileSync(outputPath)

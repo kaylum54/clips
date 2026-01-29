@@ -81,6 +81,32 @@ export default function Home() {
       return
     }
 
+    // Increment render count at load time (prevents screen recording abuse)
+    // Free users use a render credit when they load a trade, not when they export
+    if (!isPro) {
+      try {
+        const trackRes = await fetch('/api/renders/track', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tokenSymbol: entrySwap.tokenAddress?.slice(0, 8),
+          }),
+        })
+        if (!trackRes.ok) {
+          const trackData = await trackRes.json()
+          if (trackRes.status === 403 && trackData.error?.includes('limit')) {
+            setShowUpgradeModal(true)
+            return
+          }
+        }
+        // Refresh profile so UI render count updates immediately
+        await refreshProfile()
+      } catch (err) {
+        console.error('Failed to track render usage:', err)
+        // Don't block the trade load if tracking fails
+      }
+    }
+
     // Set the pending trade
     const trade: PendingTrade = {
       entry: entrySwap,
@@ -130,7 +156,7 @@ export default function Home() {
       timeFrom,
       timeTo,
     })
-  }, [fetchCandles, setTimeframe, setDateRange, displayMode, canRender])
+  }, [fetchCandles, setTimeframe, setDateRange, displayMode, canRender, isPro, refreshProfile])
 
   const handleTradeProcessed = useCallback((entryPrice?: number, exitPrice?: number) => {
     // Trade has been processed and markers placed

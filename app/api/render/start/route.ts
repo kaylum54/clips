@@ -99,21 +99,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Atomically increment render count at START time (prevents race conditions)
-    // This ensures the limit is enforced even with concurrent requests
-    if (!isPro) {
-      try {
-        const adminSupabaseForIncrement = createAdminClient()
-        const { error: incrementError } = await (adminSupabaseForIncrement as any).rpc('increment_render_count', { user_uuid: user.id })
-
-        if (incrementError) {
-          console.error('Failed to increment render count at start:', incrementError)
-        }
-      } catch (incrementErr) {
-        console.error('Failed to increment render count (admin client):', incrementErr)
-        // Don't block the render if increment fails - server limit check already passed
-      }
-    }
+    // Render count is now incremented at trade load time (in dashboard page)
+    // to prevent screen recording abuse. Keep limit check above as safeguard.
 
     // Parse and validate request body
     const body: StartRenderRequest = await request.json()

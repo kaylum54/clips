@@ -3,7 +3,6 @@
 import { useCallback, useMemo, useEffect, useRef, useState } from 'react'
 import type { Candle, Timeframe, DateRange, DisplayMode, PendingTrade } from '@/types'
 import Chart from './Chart'
-import StatsOverlay from './StatsOverlay'
 import MarkerControls from './MarkerControls'
 import PlaybackControls from './PlaybackControls'
 import SpeedSelector from './SpeedSelector'
@@ -199,10 +198,6 @@ export default function ChartContainer({
     return playheadIndex >= exit.candleIndex
   }, [exit, playheadIndex])
 
-  // Current and first candle for stats overlay
-  const currentCandle = visibleCandles[visibleCandles.length - 1] || null
-  const firstCandle = candles[0] || null
-
   // Handle chart click for marker placement
   const handleChartClick = useCallback((price: number, time: number, candleIndex: number) => {
     placeMarker(price, time, candleIndex)
@@ -375,10 +370,6 @@ export default function ChartContainer({
           </div>
         ) : (
           <>
-            <StatsOverlay
-              currentCandle={currentCandle}
-              firstCandle={firstCandle}
-            />
             <Chart
               candles={candles}
               visibleCandles={visibleCandles}
