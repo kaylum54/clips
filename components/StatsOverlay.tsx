@@ -6,10 +6,9 @@ import { formatPrice, formatPercent, formatDateTime } from '@/lib/formatters'
 interface StatsOverlayProps {
   currentCandle: Candle | null
   firstCandle: Candle | null
-  tokenSymbol?: string
 }
 
-export default function StatsOverlay({ currentCandle, firstCandle, tokenSymbol }: StatsOverlayProps) {
+export default function StatsOverlay({ currentCandle, firstCandle }: StatsOverlayProps) {
   if (!currentCandle || !firstCandle) return null
 
   const priceChange = currentCandle.close - firstCandle.close
@@ -19,11 +18,6 @@ export default function StatsOverlay({ currentCandle, firstCandle, tokenSymbol }
   return (
     <div className="absolute top-4 left-4 z-10 p-3 rounded-lg bg-zinc-900/80 backdrop-blur-sm border border-zinc-800">
       <div className="space-y-1 font-mono text-sm">
-        {tokenSymbol && (
-          <div className="text-sm font-bold text-zinc-300 tracking-wide">
-            {tokenSymbol}
-          </div>
-        )}
         <div className="text-lg font-bold text-white">
           {formatPrice(currentCandle.close)}
         </div>

@@ -410,7 +410,6 @@ export default function ChartContainer({
             <StatsOverlay
               currentCandle={currentCandle}
               firstCandle={firstCandle}
-              tokenSymbol={tokenSymbol}
             />
             <TradeStats
               stats={tradeStats}
@@ -427,6 +426,7 @@ export default function ChartContainer({
               height={isFullscreen ? window.innerHeight - 120 : 500}
               onChartClick={handleChartClick}
               isPlacingMarker={isPlacingMarker}
+              tokenSymbol={tokenSymbol}
             />
           </>
         )}

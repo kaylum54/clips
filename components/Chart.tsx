@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useCallback } from 'react'
-import { createChart, CandlestickSeries, CandlestickData, Time, createSeriesMarkers, ISeriesMarkersPluginApi } from 'lightweight-charts'
+import { createChart, createTextWatermark, CandlestickSeries, CandlestickData, Time, createSeriesMarkers, ISeriesMarkersPluginApi } from 'lightweight-charts'
 import type { Candle, TradeMarker } from '@/types'
 import { CHART_COLORS, MARKER_COLORS } from '@/lib/constants'
 
@@ -15,6 +15,7 @@ interface ChartProps {
   height?: number
   onChartClick?: (price: number, time: number, candleIndex: number) => void
   isPlacingMarker?: boolean
+  tokenSymbol?: string
 }
 
 // Format price for display - handles very small memecoin prices and large market caps
@@ -56,12 +57,15 @@ export default function Chart({
   height = 500,
   onChartClick,
   isPlacingMarker = false,
+  tokenSymbol,
 }: ChartProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<ReturnType<typeof createChart> | null>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const seriesRef = useRef<any>(null)
   const markersRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const watermarkRef = useRef<any>(null)
 
   // Initialize chart
   useEffect(() => {
@@ -99,6 +103,23 @@ export default function Chart({
       },
     })
 
+    // Add text watermark for token symbol
+    if (tokenSymbol) {
+      const pane = chart.panes()[0]
+      watermarkRef.current = createTextWatermark(pane, {
+        visible: true,
+        horzAlign: 'left',
+        vertAlign: 'top',
+        lines: [
+          {
+            text: tokenSymbol,
+            color: 'rgba(255, 255, 255, 0.07)',
+            fontSize: 48,
+          },
+        ],
+      })
+    }
+
     const series = chart.addSeries(CandlestickSeries, {
       upColor: CHART_COLORS.candleUp,
       downColor: CHART_COLORS.candleDown,
@@ -124,12 +145,44 @@ export default function Chart({
 
     return () => {
       window.removeEventListener('resize', handleResize)
+      if (watermarkRef.current) {
+        watermarkRef.current.detach()
+        watermarkRef.current = null
+      }
       chart.remove()
       chartRef.current = null
       seriesRef.current = null
       markersRef.current = null
     }
   }, [height])
+
+  // Update watermark when tokenSymbol changes
+  useEffect(() => {
+    if (!chartRef.current) return
+
+    // Remove old watermark
+    if (watermarkRef.current) {
+      watermarkRef.current.detach()
+      watermarkRef.current = null
+    }
+
+    // Create new watermark if symbol exists
+    if (tokenSymbol) {
+      const pane = chartRef.current.panes()[0]
+      watermarkRef.current = createTextWatermark(pane, {
+        visible: true,
+        horzAlign: 'left',
+        vertAlign: 'top',
+        lines: [
+          {
+            text: tokenSymbol,
+            color: 'rgba(255, 255, 255, 0.07)',
+            fontSize: 48,
+          },
+        ],
+      })
+    }
+  }, [tokenSymbol])
 
   // Update data when candles change
   useEffect(() => {

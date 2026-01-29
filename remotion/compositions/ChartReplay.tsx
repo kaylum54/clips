@@ -123,19 +123,28 @@ export const ChartReplay: React.FC<ChartReplayProps> = ({
             zIndex: 10,
             display: 'flex',
             alignItems: 'center',
-            gap: 8,
           }}
         >
-          <span
+          <div
             style={{
-              fontSize: 22,
-              fontWeight: 700,
-              color: '#ffffff',
-              letterSpacing: '-0.02em',
+              background: 'rgba(0, 0, 0, 0.6)',
+              borderRadius: 10,
+              padding: '8px 18px',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
             }}
           >
-            {tokenSymbol}
-          </span>
+            <span
+              style={{
+                fontSize: 32,
+                fontWeight: 800,
+                color: '#ffffff',
+                letterSpacing: '-0.02em',
+                textShadow: '0 2px 8px rgba(0, 0, 0, 0.6)',
+              }}
+            >
+              {tokenSymbol}
+            </span>
+          </div>
         </div>
       )}
 
