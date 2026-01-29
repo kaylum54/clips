@@ -45,7 +45,7 @@ export function DashboardHeader() {
       {/* Logo */}
       <Link href="/" className="hover:opacity-80 transition-opacity">
         <Image
-          src="/clips-logo-v2.png"
+          src="/motionclipslogo1.png"
           alt="Clips"
           width={120}
           height={40}

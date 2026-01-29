@@ -48,7 +48,7 @@ export function Sidebar() {
       <div className="p-4 border-b border-[#2a2a2a]">
         <Link href="/" className="flex items-center gap-3">
           <Image
-            src="/clips-logo-v2.png"
+            src="/motionclipslogo1.png"
             alt="Clips"
             width={120}
             height={40}

@@ -37,7 +37,7 @@ export function Navbar() {
           {/* Logo */}
           <Link href="/">
             <Image
-              src="/clips-logo-v2.png"
+              src="/motionclipslogo1.png"
               alt="Clips"
               width={120}
               height={40}

@@ -14,7 +14,7 @@ export function Footer() {
           <div className="md:col-span-2">
             <Link href="/" className="inline-block mb-4">
               <Image
-                src="/clips-logo-v2.png"
+                src="/motionclipslogo1.png"
                 alt="Clips"
                 width={120}
                 height={40}
