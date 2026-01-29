@@ -14,6 +14,7 @@ export interface TradeMarker {
   price: number
   time: number      // Unix timestamp matching candle time
   candleIndex: number
+  actualPrice?: number  // Actual on-chain trade price for P&L (constant across timeframes)
 }
 
 // Marker state management

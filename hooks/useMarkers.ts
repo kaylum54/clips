@@ -24,8 +24,12 @@ interface UseMarkersReturn {
 }
 
 function calculateTradeStats(entry: TradeMarker, exit: TradeMarker): TradeStats {
-  const priceChange = exit.price - entry.price
-  const percentChange = ((exit.price - entry.price) / entry.price) * 100
+  // Use actualPrice (on-chain swap price) for P&L when available
+  // This ensures P&L is constant across timeframes
+  const entryPrice = entry.actualPrice ?? entry.price
+  const exitPrice = exit.actualPrice ?? exit.price
+  const priceChange = exitPrice - entryPrice
+  const percentChange = entryPrice > 0 ? ((exitPrice - entryPrice) / entryPrice) * 100 : 0
 
   return {
     entryPrice: entry.price,

@@ -156,20 +156,22 @@ export default function ChartContainer({
     const entryCandle = candles[entryIndex]
     const exitCandle = candles[exitIndex]
 
-    // Place entry marker - use candle close price (USD) for chart display
+    // Place entry marker - candle close price for chart display, actualPrice for P&L
     setEntryMarker({
       type: 'entry',
       price: entryCandle.close,
       time: entryCandle.time,
       candleIndex: entryIndex,
+      actualPrice: pendingTrade.entry.price,
     })
 
-    // Place exit marker - use candle close price (USD) for chart display
+    // Place exit marker - candle close price for chart display, actualPrice for P&L
     setExitMarker({
       type: 'exit',
       price: exitCandle.close,
       time: exitCandle.time,
       candleIndex: exitIndex,
+      actualPrice: pendingTrade.exit.price,
     })
 
     // Seek playhead to entry position (start of the trade)
