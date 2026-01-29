@@ -66,10 +66,10 @@ export function Hero() {
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
           <Link
-            href={user ? '/dashboard' : '/dashboard'}
+            href={user ? '/dashboard' : '/auth/login'}
             className="w-full sm:w-auto px-8 py-4 bg-green-500 hover:bg-[#16a34a] text-black font-semibold text-lg rounded-lg transition-all hover:-translate-y-0.5"
           >
-            Create Your First Clip
+            {user ? 'Go to Dashboard' : 'Create Your First Clip'}
           </Link>
           <a
             href="#how-it-works"
@@ -180,14 +180,14 @@ export function Hero() {
             <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
             </svg>
-            Free to use
+            5 free renders/month
           </span>
           <span className="hidden sm:inline text-[#3a3a3a]">•</span>
           <span className="flex items-center gap-2">
             <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
             </svg>
-            No signup required
+            Quick signup with Google
           </span>
           <span className="hidden sm:inline text-[#3a3a3a]">•</span>
           <span className="flex items-center gap-2">
