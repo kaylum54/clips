@@ -156,7 +156,7 @@ export default function ChartContainer({
     const entryCandle = candles[entryIndex]
     const exitCandle = candles[exitIndex]
 
-    // Place entry marker - always use candle close price (USD) since transaction price is in SOL
+    // Place entry marker - use candle close price (USD) for chart display
     setEntryMarker({
       type: 'entry',
       price: entryCandle.close,
@@ -164,7 +164,7 @@ export default function ChartContainer({
       candleIndex: entryIndex,
     })
 
-    // Place exit marker - always use candle close price (USD)
+    // Place exit marker - use candle close price (USD) for chart display
     setExitMarker({
       type: 'exit',
       price: exitCandle.close,
@@ -177,7 +177,10 @@ export default function ChartContainer({
 
     // Mark as processed
     processedTradeRef.current = tradeId
-    onTradeProcessed?.(entryCandle.close, exitCandle.close)
+
+    // Use actual transaction prices (SOL-denominated) for P&L calculation
+    // These are constant across timeframes since they come from on-chain swap data
+    onTradeProcessed?.(pendingTrade.entry.price, pendingTrade.exit.price)
   }, [pendingTrade, candles, isLoading, findClosestCandleIndex, setEntryMarker, setExitMarker, seekToProgress, onTradeProcessed])
 
   const {
