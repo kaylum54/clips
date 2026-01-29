@@ -48,11 +48,11 @@ export function Sidebar() {
       <div className="p-4 border-b border-[#2a2a2a]">
         <Link href="/" className="flex items-center gap-3">
           <Image
-            src="/motionclipslogo1.png"
+            src="/motionlogo1.png"
             alt="Clips"
-            width={120}
-            height={40}
-            className="h-10 w-auto"
+            width={60}
+            height={20}
+            className="h-5 w-auto"
           />
           <span className="px-2 py-0.5 bg-red-500/10 text-red-400 text-xs font-medium rounded">
             Admin

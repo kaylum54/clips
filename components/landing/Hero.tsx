@@ -30,6 +30,17 @@ export function Hero() {
         }}
       />
 
+      {/* MotionClips logo background feature */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" style={{ opacity: 0.07 }}>
+        <Image
+          src="/motionlogo1.png"
+          alt=""
+          width={700}
+          height={700}
+          className="w-[700px] h-auto"
+        />
+      </div>
+
       {/* Hero glow - centered behind hero area */}
       <div
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] pointer-events-none"
@@ -210,23 +221,50 @@ export function Hero() {
   )
 }
 
-// Generate realistic-looking candle data
+// Static candle data (deterministic to avoid hydration mismatch)
+const STATIC_CANDLES = [
+  { isGreen: false, body: 8.2, wickTop: 3.1, wickBottom: 5.4 },
+  { isGreen: true, body: 12.5, wickTop: 2.0, wickBottom: 4.1 },
+  { isGreen: false, body: 6.8, wickTop: 5.5, wickBottom: 2.3 },
+  { isGreen: true, body: 10.1, wickTop: 1.8, wickBottom: 6.7 },
+  { isGreen: false, body: 14.3, wickTop: 4.2, wickBottom: 1.9 },
+  { isGreen: true, body: 7.6, wickTop: 3.8, wickBottom: 3.5 },
+  { isGreen: false, body: 11.9, wickTop: 6.1, wickBottom: 2.8 },
+  { isGreen: true, body: 9.4, wickTop: 2.5, wickBottom: 5.0 },
+  { isGreen: false, body: 5.7, wickTop: 7.3, wickBottom: 4.6 },
+  { isGreen: true, body: 13.8, wickTop: 1.2, wickBottom: 3.2 },
+  { isGreen: false, body: 8.9, wickTop: 4.7, wickBottom: 6.0 },
+  { isGreen: true, body: 15.2, wickTop: 2.9, wickBottom: 1.5 },
+  { isGreen: true, body: 11.4, wickTop: 3.4, wickBottom: 4.8 },
+  { isGreen: false, body: 7.1, wickTop: 5.9, wickBottom: 2.1 },
+  { isGreen: true, body: 16.7, wickTop: 1.6, wickBottom: 3.9 },
+  { isGreen: true, body: 10.8, wickTop: 4.0, wickBottom: 5.7 },
+  { isGreen: false, body: 6.3, wickTop: 7.1, wickBottom: 1.3 },
+  { isGreen: true, body: 14.0, wickTop: 2.3, wickBottom: 4.4 },
+  { isGreen: true, body: 9.7, wickTop: 3.6, wickBottom: 6.2 },
+  { isGreen: false, body: 12.2, wickTop: 5.2, wickBottom: 2.6 },
+  { isGreen: true, body: 17.5, wickTop: 1.0, wickBottom: 3.7 },
+  { isGreen: true, body: 8.5, wickTop: 4.5, wickBottom: 5.3 },
+  { isGreen: true, body: 13.1, wickTop: 2.7, wickBottom: 1.8 },
+  { isGreen: false, body: 10.4, wickTop: 6.4, wickBottom: 4.0 },
+  { isGreen: true, body: 15.8, wickTop: 1.4, wickBottom: 2.9 },
+  { isGreen: true, body: 7.9, wickTop: 3.3, wickBottom: 5.8 },
+  { isGreen: true, body: 18.3, wickTop: 2.1, wickBottom: 1.1 },
+  { isGreen: false, body: 11.6, wickTop: 5.0, wickBottom: 3.4 },
+  { isGreen: true, body: 14.7, wickTop: 3.9, wickBottom: 4.3 },
+  { isGreen: true, body: 9.0, wickTop: 1.7, wickBottom: 6.5 },
+  { isGreen: true, body: 16.2, wickTop: 4.3, wickBottom: 2.0 },
+  { isGreen: false, body: 6.6, wickTop: 7.5, wickBottom: 3.0 },
+  { isGreen: true, body: 13.5, wickTop: 2.6, wickBottom: 4.9 },
+  { isGreen: true, body: 19.1, wickTop: 1.3, wickBottom: 1.6 },
+  { isGreen: true, body: 10.0, wickTop: 3.7, wickBottom: 5.1 },
+  { isGreen: false, body: 8.0, wickTop: 5.8, wickBottom: 2.4 },
+  { isGreen: true, body: 15.4, wickTop: 2.2, wickBottom: 3.6 },
+  { isGreen: true, body: 12.8, wickTop: 4.1, wickBottom: 4.7 },
+  { isGreen: true, body: 17.0, wickTop: 1.9, wickBottom: 2.5 },
+  { isGreen: false, body: 9.3, wickTop: 6.8, wickBottom: 3.3 },
+]
+
 function generateCandles() {
-  const candles = []
-  let trend = 0.5 // Start neutral, will trend up
-
-  for (let i = 0; i < 40; i++) {
-    // Gradually trend upward (for the winning trade visual)
-    if (i > 10) trend = 0.6
-    if (i > 25) trend = 0.7
-
-    const isGreen = Math.random() < trend
-    const body = 5 + Math.random() * 15
-    const wickTop = Math.random() * 8
-    const wickBottom = Math.random() * 8
-
-    candles.push({ isGreen, body, wickTop, wickBottom })
-  }
-
-  return candles
+  return STATIC_CANDLES
 }

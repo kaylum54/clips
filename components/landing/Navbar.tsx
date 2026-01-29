@@ -37,11 +37,11 @@ export function Navbar() {
           {/* Logo */}
           <Link href="/">
             <Image
-              src="/motionclipslogo1.png"
+              src="/motionlogo1.png"
               alt="Clips"
-              width={120}
-              height={40}
-              className="h-10 w-auto"
+              width={60}
+              height={20}
+              className="h-5 w-auto"
             />
           </Link>
 
