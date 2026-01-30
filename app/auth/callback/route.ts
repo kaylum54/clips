@@ -13,6 +13,11 @@ import type { Database } from '@/types/database'
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
 
+  // Determine the correct base URL (behind Nginx, origin is localhost)
+  const forwardedHost = request.headers.get('x-forwarded-host')
+  const isLocalEnv = process.env.NODE_ENV === 'development'
+  const baseUrl = isLocalEnv || !forwardedHost ? origin : `https://${forwardedHost}`
+
   const code = searchParams.get('code')
   const next = searchParams.get('next') ?? '/dashboard'
   const error = searchParams.get('error')
@@ -21,7 +26,7 @@ export async function GET(request: NextRequest) {
   // Handle error from OAuth provider
   if (error) {
     console.error('Auth callback error:', error, errorDescription)
-    const errorUrl = new URL('/auth/login', origin)
+    const errorUrl = new URL('/auth/login', baseUrl)
     errorUrl.searchParams.set('error', errorDescription || error)
     return NextResponse.redirect(errorUrl)
   }
@@ -54,26 +59,15 @@ export async function GET(request: NextRequest) {
 
     if (exchangeError) {
       console.error('Code exchange error:', exchangeError)
-      const errorUrl = new URL('/auth/login', origin)
+      const errorUrl = new URL('/auth/login', baseUrl)
       errorUrl.searchParams.set('error', 'Failed to authenticate. Please try again.')
       return NextResponse.redirect(errorUrl)
     }
 
     // Successful authentication - redirect to intended destination
-    const forwardedHost = request.headers.get('x-forwarded-host')
-    const isLocalEnv = process.env.NODE_ENV === 'development'
-
-    if (isLocalEnv) {
-      // Local development - use origin directly
-      return NextResponse.redirect(`${origin}${next}`)
-    } else if (forwardedHost) {
-      // Production with load balancer/proxy
-      return NextResponse.redirect(`https://${forwardedHost}${next}`)
-    } else {
-      return NextResponse.redirect(`${origin}${next}`)
-    }
+    return NextResponse.redirect(`${baseUrl}${next}`)
   }
 
   // No code present - redirect to login
-  return NextResponse.redirect(`${origin}/auth/login`)
+  return NextResponse.redirect(`${baseUrl}/auth/login`)
 }
