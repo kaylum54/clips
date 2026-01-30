@@ -61,7 +61,7 @@ export const ChartReplay: React.FC<ChartReplayProps> = ({
           }}
         >
           <Img
-            src={staticFile('motionclipswatermark.jpeg')}
+            src={staticFile('clipswatermark.jpeg')}
             style={{
               width: width * 0.4,
               height: 'auto',
