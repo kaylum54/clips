@@ -10,7 +10,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { verifyAdmin, logAdminAction } from '@/lib/admin'
 import { checkRateLimit, getRateLimitKey, RATE_LIMITS } from '@/lib/rate-limit'
 import { z } from 'zod'
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     // Fetch user profile
     const { data: user, error: userError } = await supabase
@@ -175,7 +175,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     const updates = parseResult.data
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     // Check if user exists
     const { data: existingUser, error: fetchError } = await supabase

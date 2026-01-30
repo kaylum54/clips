@@ -9,7 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { verifyAdmin } from '@/lib/admin'
 import { checkRateLimit, getRateLimitKey, RATE_LIMITS } from '@/lib/rate-limit'
 import { z } from 'zod'
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
 
     const { search, status, limit, offset, sortBy, sortOrder } = parseResult.data
 
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     // Build query - select only necessary fields (no sensitive data like stripe_customer_id)
     let query = supabase
