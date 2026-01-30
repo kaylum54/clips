@@ -14,6 +14,7 @@ const publicRoutes = [
   '/auth/login',
   '/auth/signup',
   '/auth/callback',
+  '/auth/confirm',
   '/auth/reset-password',
   '/leaderboard',
   '/u', // Public profiles base path
