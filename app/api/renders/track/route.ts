@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
     // Get user profile to check limits
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('subscription_status, renders_this_month, is_banned')
+      .select('subscription_status, renders_this_month, is_banned, is_admin')
       .eq('id', user.id)
       .single()
 
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const isPro = profile.subscription_status === 'active'
+    const isPro = profile.subscription_status === 'active' || profile.is_admin === true
     const rendersThisMonth = profile.renders_this_month ?? 0
 
     // Security check: enforce render limit server-side

@@ -27,7 +27,7 @@ export async function GET() {
     // Get user profile with subscription info
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('subscription_status, renders_this_month, renders_reset_at, is_banned')
+      .select('subscription_status, renders_this_month, renders_reset_at, is_banned, is_admin')
       .eq('id', user.id)
       .single()
 
@@ -46,7 +46,7 @@ export async function GET() {
       )
     }
 
-    const isPro = profile.subscription_status === 'active'
+    const isPro = profile.subscription_status === 'active' || profile.is_admin === true
     const rendersThisMonth = profile.renders_this_month ?? 0
     const canRender = isPro || rendersThisMonth < FREE_RENDER_LIMIT
 
