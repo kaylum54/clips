@@ -66,6 +66,7 @@
   --animate-fade-in: fade-in 0.5s ease-out;
   --animate-slide-up: slide-up 0.5s ease-out;
   --animate-pulse-glow: pulse-glow 2s ease-in-out infinite;
+  --animate-glow-breathe: glow-breathe 3s ease-in-out infinite;
 }
 
 @keyframes fade-in {
@@ -81,6 +82,11 @@
 @keyframes pulse-glow {
   0%, 100% { box-shadow: 0 0 20px var(--profit-glow); }
   50% { box-shadow: 0 0 40px var(--profit-glow); }
+}
+
+@keyframes glow-breathe {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.75; }
 }
 
 body {

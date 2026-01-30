@@ -6,13 +6,18 @@
 interface BrowserMockupProps {
   children: React.ReactNode
   url?: string
+  animatedGlow?: boolean
 }
 
-export function BrowserMockup({ children, url = 'clips.app' }: BrowserMockupProps) {
+export function BrowserMockup({ children, url = 'clips.app', animatedGlow = false }: BrowserMockupProps) {
   return (
     <div className="relative group">
       {/* Glow effect */}
-      <div className="absolute -inset-1 bg-gradient-to-r from-green-500/20 via-green-500/10 to-green-500/20 rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
+      <div className={`absolute -inset-1 bg-gradient-to-r from-green-500/20 via-green-500/10 to-green-500/20 rounded-2xl blur-xl ${
+        animatedGlow
+          ? 'animate-glow-breathe'
+          : 'opacity-50 group-hover:opacity-75 transition-opacity'
+      }`} />
 
       {/* Browser frame */}
       <div className="relative bg-[#141414] border border-[#2a2a2a] rounded-xl overflow-hidden shadow-2xl shadow-black/50">
