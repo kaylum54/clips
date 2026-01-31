@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect, Suspense } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useSearchParams, useRouter } from 'next/navigation'
 import TransactionInput from '@/components/TransactionInput'
 import ChartContainer from '@/components/ChartContainer'
 import { SaveTradeModal, type SaveTradeData } from '@/components/SaveTradeModal'
@@ -41,7 +42,9 @@ function ExternalLinkIcon({ className }: { className?: string }) {
   )
 }
 
-export default function Home() {
+function DashboardContent() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
   const { isAuthenticated, isPro, canRender, renderLimit, rendersRemaining, refreshProfile } = useUser()
   const [pendingTrade, setPendingTrade] = useState<PendingTrade | null>(null)
   const [copied, setCopied] = useState(false)
@@ -73,6 +76,7 @@ export default function Home() {
 
   // Store trade timestamps for use across timeframe changes
   const tradeTimeRangeRef = useRef<{ timeFrom: number; timeTo: number } | null>(null)
+  const replayLoadedRef = useRef(false)
 
   const handleTradeSubmit = useCallback(async (entrySwap: ParsedSwap, exitSwap: ParsedSwap) => {
     // Check if user can render
@@ -287,6 +291,49 @@ export default function Home() {
     }
   }, [timeframe, dateRange, displayMode, fetchCandles])
 
+  // Auto-load trade from URL params (replay from My Trades)
+  useEffect(() => {
+    if (replayLoadedRef.current) return
+
+    const entryHash = searchParams.get('replayEntryHash')
+    const exitHash = searchParams.get('replayExitHash')
+
+    if (!entryHash || !exitHash) return
+    replayLoadedRef.current = true
+
+    // Clean URL params immediately
+    router.replace('/dashboard', { scroll: false })
+
+    // Fetch both transactions and trigger the trade load
+    const loadReplay = async () => {
+      try {
+        const [entryRes, exitRes] = await Promise.all([
+          fetch(`/api/transaction?signature=${entryHash}`),
+          fetch(`/api/transaction?signature=${exitHash}`),
+        ])
+
+        if (!entryRes.ok || !exitRes.ok) {
+          console.error('Failed to fetch replay transactions')
+          return
+        }
+
+        const entryData = await entryRes.json()
+        const exitData = await exitRes.json()
+
+        if (!entryData.success || !exitData.success) {
+          console.error('Invalid replay transaction data')
+          return
+        }
+
+        handleTradeSubmit(entryData.data, exitData.data)
+      } catch (err) {
+        console.error('Failed to load replay:', err)
+      }
+    }
+
+    loadReplay()
+  }, [searchParams, router, handleTradeSubmit])
+
   return (
     <div className="p-6 lg:p-8">
       <div className="max-w-5xl mx-auto">
@@ -472,5 +519,13 @@ export default function Home() {
         onClose={() => setShowUpgradeModal(false)}
       />
     </div>
+  )
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="p-6 lg:p-8"><div className="max-w-5xl mx-auto"><div className="text-gray-400">Loading...</div></div></div>}>
+      <DashboardContent />
+    </Suspense>
   )
 }

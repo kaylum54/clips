@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { checkRenderRateLimit } from '@/lib/rate-limit-redis'
+import { checkRateLimit, getRateLimitKey, RATE_LIMITS } from '@/lib/rate-limit'
 import { addRenderJob, getQueuePosition } from '@/lib/queue/render-queue'
 import type { RenderJobInput } from '@/lib/queue/types'
 import type { Candle } from '@/types'
@@ -47,8 +47,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Rate limiting with Redis
-    const rateLimit = await checkRenderRateLimit(user.id)
+    // Rate limiting
+    const rateLimitKey = getRateLimitKey('render', user.id)
+    const rateLimit = checkRateLimit(rateLimitKey, RATE_LIMITS.render)
 
     if (!rateLimit.success) {
       return NextResponse.json(

@@ -105,13 +105,15 @@ export default function TradesPage() {
   }
 
   const handleReplay = (trade: Trade) => {
-    // Navigate to dashboard with trade data
+    if (!isPro) {
+      alert('Upgrade to Pro to replay saved trades')
+      return
+    }
     const params = new URLSearchParams({
-      entryHash: trade.entry_hash,
-      exitHash: trade.exit_hash,
-      tokenAddress: trade.token_address,
+      replayEntryHash: trade.entry_hash,
+      replayExitHash: trade.exit_hash,
     })
-    router.push(`/?${params.toString()}`)
+    router.push(`/dashboard?${params.toString()}`)
   }
 
   // Show loading while checking auth
@@ -184,6 +186,7 @@ export default function TradesPage() {
           onDelete={handleDelete}
           onTogglePublic={isPro ? handleTogglePublic : undefined}
           onReplay={handleReplay}
+          isPro={isPro}
           isLoading={isLoading}
           emptyMessage="No trades saved yet. Create a replay and save it!"
         />
