@@ -19,7 +19,9 @@ export async function GET(request: NextRequest) {
   const baseUrl = isLocalEnv || !forwardedHost ? origin : `https://${forwardedHost}`
 
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/dashboard'
+  const nextParam = searchParams.get('next') ?? '/dashboard'
+  // Security: Validate redirect to prevent open redirect attacks
+  const next = nextParam.startsWith('/') && !nextParam.startsWith('//') ? nextParam : '/dashboard'
   const error = searchParams.get('error')
   const errorDescription = searchParams.get('error_description')
 

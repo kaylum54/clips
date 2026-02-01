@@ -7,7 +7,11 @@ export const PLAYBACK_SPEEDS: PlaybackSpeed[] = [0.25, 0.5, 1, 2, 5, 10]
 export const DEFAULT_SPEED: PlaybackSpeed = 1
 
 // Base interval in ms per candle at 1x speed
-export const BASE_INTERVAL_MS = 100
+// 200ms = 5 candles per second at 1x speed
+export const BASE_INTERVAL_MS = 200
+
+// Free tier render limit per month
+export const FREE_RENDER_LIMIT = 5
 
 // Available timeframes
 export const TIMEFRAMES: { value: Timeframe; label: string }[] = [

@@ -7,8 +7,7 @@
 
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-
-const FREE_RENDER_LIMIT = 5
+import { FREE_RENDER_LIMIT } from '@/lib/constants'
 
 export async function GET() {
   try {

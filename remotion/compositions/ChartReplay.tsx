@@ -2,6 +2,7 @@ import React from 'react'
 import { useCurrentFrame, useVideoConfig, AbsoluteFill, Img, staticFile } from 'remotion'
 import { CandlestickCanvas } from '../components/CandlestickCanvas'
 import type { Candle, TradeMarker } from '@/types'
+import { BASE_INTERVAL_MS } from '@/lib/constants'
 
 export interface ChartReplayProps {
   candles: Candle[]
@@ -12,10 +13,6 @@ export interface ChartReplayProps {
   tokenSymbol?: string
   isPro?: boolean
 }
-
-// Base interval in ms at 1x speed
-// 200ms = 5 candles per second at 1x, 1.25 candles per second at 0.25x
-const BASE_INTERVAL_MS = 200
 
 export const ChartReplay: React.FC<ChartReplayProps> = ({
   candles,

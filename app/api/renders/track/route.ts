@@ -14,8 +14,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { checkRateLimit, getRateLimitKey, RATE_LIMITS } from '@/lib/rate-limit'
-
-const FREE_RENDER_LIMIT = 5
+import { FREE_RENDER_LIMIT } from '@/lib/constants'
 
 // Input validation schema
 const trackRenderSchema = z.object({

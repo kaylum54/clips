@@ -132,7 +132,7 @@ export async function processRenderJob(job: Job<RenderJobData>): Promise<RenderJ
 
     // Calculate video duration
     const fps = 30
-    const BASE_INTERVAL_MS = 200
+    const { BASE_INTERVAL_MS } = await import('@/lib/constants')
     const msPerCandle = BASE_INTERVAL_MS / speed
     const framesPerCandle = Math.max(1, Math.round(msPerCandle / (1000 / fps)))
     const candlesToPlay = endIndex - startIndex + 1

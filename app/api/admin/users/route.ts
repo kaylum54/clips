@@ -89,8 +89,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Apply search filter (username or email)
+    // Security: Escape PostgREST special characters to prevent filter injection
     if (search) {
-      query = query.or(`username.ilike.%${search}%,email.ilike.%${search}%`)
+      const sanitized = search.replace(/[%_*\\]/g, '\\$&')
+      query = query.or(`username.ilike.%${sanitized}%,email.ilike.%${sanitized}%`)
     }
 
     // Apply sorting and pagination

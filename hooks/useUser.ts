@@ -7,9 +7,7 @@
  */
 
 import { useAuth } from '@/components/AuthProvider'
-
-// Free tier render limit
-const FREE_RENDER_LIMIT = 5
+import { FREE_RENDER_LIMIT } from '@/lib/constants'
 
 export function useUser() {
   const { user, profile, loading, signOut, refreshProfile } = useAuth()

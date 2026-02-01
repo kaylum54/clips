@@ -12,8 +12,7 @@ import { checkRateLimit, getRateLimitKey, RATE_LIMITS } from '@/lib/rate-limit'
 import { addRenderJob, getQueuePosition } from '@/lib/queue/render-queue'
 import type { RenderJobInput } from '@/lib/queue/types'
 import type { Candle } from '@/types'
-
-const FREE_RENDER_LIMIT = 5
+import { FREE_RENDER_LIMIT } from '@/lib/constants'
 
 interface StartRenderRequest {
   candles: Candle[]

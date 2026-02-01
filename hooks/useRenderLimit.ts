@@ -60,13 +60,13 @@ export function useRenderLimit() {
       return data
     } catch (error) {
       console.error('Failed to check render limit:', error)
-      // Default to allowing render on error (fail open for UX)
+      // Fail closed: block render if we can't verify limits
       return {
-        canRender: true,
+        canRender: false,
         isPro: false,
         rendersThisMonth: 0,
         renderLimit: 5,
-        rendersRemaining: 5,
+        rendersRemaining: 0,
       }
     } finally {
       setIsChecking(false)
