@@ -2,7 +2,8 @@ import React from 'react'
 import { useCurrentFrame, useVideoConfig, AbsoluteFill, Img, staticFile } from 'remotion'
 import { CandlestickCanvas } from '../components/CandlestickCanvas'
 import type { Candle, TradeMarker } from '@/types'
-import { BASE_INTERVAL_MS } from '@/lib/constants'
+// Remotion webpack doesn't resolve @/ aliases — use relative import
+import { BASE_INTERVAL_MS } from '../../lib/constants'
 
 export interface ChartReplayProps {
   candles: Candle[]
